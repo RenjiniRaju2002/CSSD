@@ -15,9 +15,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 // import Driver from './pages/Driver.tsx';
 import TopNavBar from './components/TopNavBar';
 import SideBar from './components/SideBar';
-import page from './pages/page';
 import Table from './pages/Table.tsx';
 import Dashboard from './pages/Dashboard.tsx';
+import RequestManagement from './pages/Request Management.tsx';
 
 // Define the props interface for components that receive sidebar props
 // interface SidebarProps {
@@ -26,11 +26,11 @@ import Dashboard from './pages/Dashboard.tsx';
 // }
 
 const App: React.FC = () => {
-  // const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
-  // const toggleSidebar = (): void => {
-  //   setSidebarCollapsed(!sidebarCollapsed);
-  // };
+  const toggleSidebar = (): void => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
 
   return (
     <Router>
@@ -40,13 +40,15 @@ const App: React.FC = () => {
 
         {/* Main content with Sidebar + Page content */}
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* <SideBar collapsed={sidebarCollapsed} /> */}
-          <SideBar/>
+          <SideBar collapsed={sidebarCollapsed} />
+          {/* <SideBar/> */}
           <div style={{ flex: 1, padding: '10px', overflowY: 'auto' }}>
             <Routes>
-              <Route path="/" element={<page />} />
-              <Route path="/dashboard" element={<Dashboard/>} />
+              
+              <Route path="/" element={<Dashboard sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
+              <Route path="/dashboard" element={<Dashboard sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
               <Route path="/a" element={<Table/>} />
+              <Route path='/request-management'  element={<RequestManagement sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
               
               {/* <Route path="/dashboard" element={<Dashboard sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} /> */}
               {/* <Route path="/register-vehicle" element={<VehicleRegistration sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />

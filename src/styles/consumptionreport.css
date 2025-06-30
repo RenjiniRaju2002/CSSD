@@ -1,0 +1,145 @@
+/* ConsumptionReports.css */
+
+.report-container {
+    background-color: #ffffff;
+    min-height: 100vh;
+    padding: 20px;
+    border-top: 4px solid #038ba4;
+    margin: 40px 40px 0 40px;
+  }
+  
+  .report-header {
+    background: #fff;
+    padding: 20px;
+    border-left: 4px solid #038ba4;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .report-title {
+    font-size: 20px;
+    color: #038ba4;
+    font-weight: bold;
+  }
+  
+  .report-subtitle {
+    font-size: 14px;
+    color: #555;
+    margin-top: 5px;
+  }
+  
+  .report-card {
+    background-color: #fff;
+    margin-top: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  .report-card-header {
+    border-bottom: 1px solid #ddd;
+    padding: 16px;
+  }
+  
+  .report-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .icon {
+    width: 20px;
+    height: 20px;
+    color: #038ba4;
+  }
+  
+  .report-card-body {
+    padding: 16px;
+  }
+  
+  .filter-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .calendar-button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+  }
+  
+  .calendar-icon {
+    margin-right: 8px;
+  }
+  
+  .calendar-content {
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .select-trigger {
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    padding: 8px;
+    background-color: #fff;
+  }
+  
+  .filter-button-wrapper {
+    display: flex;
+    align-items: flex-end;
+  }
+  
+  .primary-button {
+    width: 100%;
+    background-color: #038ba4;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+  
+  .primary-button:hover {
+    background-color: #0088cc;
+  }
+  
+  .export-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  
+  .export-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    color: #333;
+    background-color: #f9f9f9;
+    cursor: pointer;
+  }
+  
+  .export-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .export-button:hover:not(:disabled) {
+    background-color: #efefef;
+  }
+  

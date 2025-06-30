@@ -4,12 +4,17 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Activity, Package } from "lucide-react";
-import { page } from "../pages/page";
+// import { page } from "../pages/page";
+import PageContainer from "../components/PageContainer";
 import "../styles/dashboard.css";
 import Cards from '../components/Cards';
 import SectionHeading from '../components/SectionHeading';
 
-const Dashboard = ({ sidebarCollapsed, toggleSidebar }) => {
+interface DashboardProps {
+  sidebarCollapsed?: boolean;
+  toggleSidebar?: () => void;
+}
+const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleSidebar }) => {
   const navigate = useNavigate();
   
   // Mock stats for demonstration - replace with actual data
@@ -32,7 +37,10 @@ const Dashboard = ({ sidebarCollapsed, toggleSidebar }) => {
   return (
     <>
       <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator />
-      <div className="page-container">
+      
+       
+      {/* <div className="page-container"> */}
+      <PageContainer>
         <SectionHeading title="Dashboard" subtitle="Central Sterile Service Department" className="dashboard-heading" />
         
         <div className="dashboard-summary-cards">
@@ -89,7 +97,8 @@ const Dashboard = ({ sidebarCollapsed, toggleSidebar }) => {
             </div>
           </div>
         </div>
-      </div>
+      {/* </div> */}
+      </PageContainer>
       <Footer />
     </>
   );
