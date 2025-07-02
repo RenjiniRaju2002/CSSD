@@ -61,6 +61,17 @@ const initialKits = [
   }
 ];
 
+interface Request {
+  id: string;
+  department: string;
+  items: string;
+  quantity: number;
+  priority: string;
+  status: string;
+  date: string;
+  time: string;
+}
+
 interface RequestManagementProps {
   sidebarCollapsed?: boolean;
   toggleSidebar?: () => void;
@@ -75,10 +86,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [itemInput, setItemInput] = useState("");
   const [itemQuantity, setItemQuantity] = useState("");
   const [pendingItems, setPendingItems] = useState<any[]>([]);
-  const [requests, setRequests] = useState(() => {
-    const savedRequests = localStorage.getItem('cssd_requests');
-    return savedRequests ? JSON.parse(savedRequests) : initialData;
-  });
+  const [requests, setRequests] = useState<Request[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -98,15 +106,17 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [selectedKit, setSelectedKit] = useState<any>(null);
   const [showKitDetails, setShowKitDetails] = useState(false);
 
-  // Save requests to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('cssd_requests', JSON.stringify(requests));
-  }, [requests]);
+    fetch('http://localhost:3001/cssd_requests')
+      .then(res => res.json())
+      .then(data => setRequests(data))
+      .catch(() => setRequests(initialData));
+  }, []);
 
   // Save kits to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('cssd_kits', JSON.stringify(createdKits));
-  }, [createdKits]);
+  // useEffect(() => {
+  //   localStorage.setItem('cssd_kits', JSON.stringify(createdKits));
+  // }, [createdKits]);
 
   // Sort requests in ascending order by ID before slicing for pagination
   const sortedRequests = [...requests].sort((a, b) => a.id.localeCompare(b.id));
@@ -149,10 +159,9 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     // Optionally handle form submission for new request
   };
 
-  const handleSaveRequest = () => {
+  const handleSaveRequest = async () => {
     if (!selectedDepartment || !selectedPriority || !selectedDate || pendingItems.length === 0) return;
     const nextId = `REQ${(requests.length + 1).toString().padStart(3, "0")}`;
-    // Combine all items and quantities into one request
     const combinedItems = pendingItems.map(item => item.item).join(', ');
     const totalQuantity = pendingItems.reduce((sum, item) => sum + Number(item.quantity), 0);
     const department = pendingItems[0].department;
@@ -169,8 +178,18 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
     
-    // Update requests state which will trigger localStorage save
-    setRequests([newRequest, ...requests]);
+    // POST to API
+    await fetch('http://192.168.50.132:3001/cssd_requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newRequest)
+    });
+
+    // Fetch updated requests
+    const res = await fetch('http://192.168.50.132:3001/cssd_requests');
+    const updated = await res.json();
+    setRequests(updated);
+
       setPendingItems([]);
       setSelectedDepartment("");
       setSelectedPriority("");
@@ -210,12 +229,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     }
   };
 
-  const handleSaveKit = () => {
+  const handleSaveKit = async () => {
     if (!kitName || !kitDepartment || !kitPriority || kitItems.length === 0) return;
-    
     // Generate a new kit ID
     const newKitId = `KIT${(createdKits.length + 1).toString().padStart(3, "0")}`;
-    
     // Create new kit object
       const newKit = {
         id: newKitId,
@@ -228,10 +245,16 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       date: format(new Date(), 'yyyy-MM-dd'),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
-
-    // Update kits state which will trigger localStorage save
-    setCreatedKits([newKit, ...createdKits]);
-    
+    // POST to API
+    await fetch('http://localhost:3001/createdKits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newKit)
+    });
+    // Fetch updated kits
+    const res = await fetch('http://localhost:3001/createdKits');
+    const updated = await res.json();
+    setCreatedKits(updated);
     // Reset form and close modal
     setShowCreateKit(false);
       setKitName("");
@@ -266,7 +289,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             </h2>
       </div>
           <div className="card-content">
-            <form onSubmit={handleCreateRequest}>
+            <form onSubmit={handleSaveRequest}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div>
                   <label className="form-label">Outlet</label>
@@ -343,7 +366,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         
         type="button"
       >
-        Add
+        Add Request
       </ButtonWithGradient>
             </form>
             {pendingItems.length > 0 && (
@@ -370,33 +393,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   <ButtonWithGradient
                     type="button"
                     className="button-gradient"
-                    onClick={() => {
-                      if (pendingItems.length === 0) return;
-                      const nextId = `REQ${(requests.length + 1).toString().padStart(3, "0")}`;
-                      // Combine all items and quantities into one request
-                      const combinedItems = pendingItems.map(item => item.item).join(', ');
-                      const totalQuantity = pendingItems.reduce((sum, item) => sum + Number(item.quantity), 0);
-                      const department = pendingItems[0].department;
-                      const priority = pendingItems[0].priority;
-                      const date = pendingItems[0].date;
-                      const newRequest = {
-                        id: nextId,
-                        department,
-                        items: combinedItems,
-                        quantity: totalQuantity,
-                        priority,
-                        status: "Requested",
-                        date,
-                        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                      };
-                      setRequests([ newRequest, ...requests ]);
-                      setPendingItems([]);
-                      setSelectedDepartment("");
-                      setSelectedPriority("");
-                      setItemInput("");
-                      setItemQuantity("");
-                      setSelectedDate(undefined);
-                    }}
+                    onClick={handleSaveRequest}
                   >
                     Save Request
                   </ButtonWithGradient>
@@ -409,7 +406,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         {/* Package Kits Card */}
         <div className="card" style={{ flex: '0 1 50%', minWidth:0}}>
           <div className="card-header flex items-center justify-between">
-            <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2rem' }}>
+            <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2re m' }}>
               <Package size={20} className="mr-2" color="#0097a7" /> Package Kits
             </h2>
             <ButtonWithGradient 
@@ -421,7 +418,11 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             </ButtonWithGradient>
           </div>
           <div className="card-content">
-            <Searchbar value={kitSearchTerm} onChange={e => setKitSearchTerm(e.target.value)} />
+            <div className="flex justify-end">
+              <div className="search ml-auto">
+                <Searchbar value={kitSearchTerm} onChange={e => setKitSearchTerm(e.target.value)} />
+              </div>
+            </div>
             {createdKits.length > 0 ? (
               <Table
                 columns={[
@@ -460,36 +461,35 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       <div className="card">
         <div className="card-header">
           <h2 className="card-title">Previous Requests</h2>
-                      </div>
+        </div>
         <div className="card-content">
             <div className="flex justify-between items-center mb-4">
-            <div className="relative flex-1 max-w-md">
-              <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <div className="flex gap-2">
+                <select 
+                  className="form-input text-sm"
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+                <select 
+                  className="form-input text-sm"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="Requested">Requested</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <div className="relative flex-1 max-w-md ml-auto">
+                <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
             </div>
-
-                      <div className="flex gap-2">
-              <select 
-                className="form-input text-sm"
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value)}
-              >
-                <option value="all">All Priorities</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-              <select 
-                className="form-input text-sm"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                <option value="Requested">Requested</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
-      </div>
 
           {/* Table component for previous requests */}
           <Table

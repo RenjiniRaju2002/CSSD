@@ -18,6 +18,11 @@ import SideBar from './components/SideBar';
 import Table from './pages/Table.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import RequestManagement from './pages/Request Management.tsx';
+import ReceiveItems from './pages/Receive Items.tsx'; 
+import SterilizationProcess from './pages/Sterilization process.tsx';
+import IssueItem from './pages/Issue Item.tsx';
+import StockManagement from './pages/Stock Management.tsx';
+import ConsumptionReports from './pages/Consumption Report.tsx';
 
 // Define the props interface for components that receive sidebar props
 // interface SidebarProps {
@@ -49,6 +54,11 @@ const App: React.FC = () => {
               <Route path="/dashboard" element={<Dashboard sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
               <Route path="/a" element={<Table/>} />
               <Route path='/request-management'  element={<RequestManagement sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
+              <Route path='/receive-items'  element={<ReceiveItems sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
+              <Route path='/sterilization-process'  element={<SterilizationProcess sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
+              <Route path='/issue-item'  element={<IssueItem sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
+              <Route path='/stock-management'  element={<StockManagement sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
+              <Route path='/consumption-reports'  element={<ConsumptionReports sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />
               
               {/* <Route path="/dashboard" element={<Dashboard sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} /> */}
               {/* <Route path="/register-vehicle" element={<VehicleRegistration sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />} />

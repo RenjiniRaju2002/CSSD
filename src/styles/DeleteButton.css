@@ -1,0 +1,42 @@
+.btn-outline-danger {
+    border: none;
+    border-color: none;
+    background-color: transparent;
+}
+
+.btn-outline-danger:hover {
+    border: none;
+    border-color: none;
+    background-color: transparent;
+}
+
+.btn-outline-danger:focus {
+    border: none;
+    border-color: none;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.btn-outline-danger:active {
+    border: none;
+    border-color: none;
+    background-color: transparent;
+    transform: none;
+}
+
+.btn-outline-danger:focus:not(:focus-visible) {
+    box-shadow: none;
+}
+
+.btn-outline-danger:visited {
+    background-color: transparent;
+}
+
+.btn-outline-danger:link {
+    background-color: transparent;
+}
+
+.btn-outline-danger:focus-visible {
+    background-color: transparent;
+    box-shadow: none;
+}

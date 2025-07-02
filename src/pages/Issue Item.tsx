@@ -1,21 +1,15 @@
 import { useState, useEffect } from "react";
 import "../styles/IssueItem.css";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Search, Send, Clock, CheckCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import Header from "./Header";
-import Footer from "./Footer";
-import initialData from "../../data/issueItemData.json";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import ButtonWithGradient from "../components/ButtonWithGradient";
+import Inputtype from "../components/Inputtype";
+import Searchbar from "../components/Searchbar";
+import Table from "../components/Table";
+import PageContainer from "../components/PageContainer";
+import Cards from "../components/Cards";
+import SectionHeading from "../components/SectionHeading";
 
 interface AvailableItem {
   id: string;
@@ -29,7 +23,31 @@ interface AvailableItem {
   process?: string;
 }
 
-const IssueItem = ({ sidebarCollapsed, toggleSidebar }) => {
+interface IssueItemProps {
+  sidebarCollapsed?: boolean;
+  toggleSidebar?: () => void;
+}
+
+const defaultAvailableItems: AvailableItem[] = [
+  {
+    id: "REQ001",
+    department: "OR-1",
+    items: "Surgery Kit",
+    quantity: 2,
+    status: "Sterilized",
+    readyTime: "14:00",
+  },
+  {
+    id: "REQ002",
+    department: "OR-2",
+    items: "Instruments",
+    quantity: 3,
+    status: "Sterilized",
+    readyTime: "15:00",
+  },
+];
+
+const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleSidebar }) => {
   const [issuedItems, setIssuedItems] = useState(() => {
     const savedItems = localStorage.getItem("issuedItems");
     return savedItems
@@ -58,28 +76,71 @@ const IssueItem = ({ sidebarCollapsed, toggleSidebar }) => {
         ];
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
-  const [availableItems, setAvailableItems] = useState<AvailableItem[]>(
-    initialData.availableItems
-  );
+  const [availableItems, setAvailableItems] = useState<AvailableItem[]>(() => {
+    const saved = localStorage.getItem("availableItems");
+    return saved ? JSON.parse(saved) : defaultAvailableItems;
+  });
+  const [selectedRequestId, setSelectedRequestId] = useState("");
+  const [selectedOutlet, setSelectedOutlet] = useState("");
+  const [requestIds, setRequestIds] = useState<string[]>([]);
 
   useEffect(() => {
     localStorage.setItem("issuedItems", JSON.stringify(issuedItems));
   }, [issuedItems]);
 
+  useEffect(() => {
+    localStorage.setItem("availableItems", JSON.stringify(availableItems));
+  }, [availableItems]);
+
+  // Sync availableItems with completed sterilization processes
+  useEffect(() => {
+    const savedProcesses = localStorage.getItem("sterilizationProcesses");
+    if (savedProcesses) {
+      try {
+        const processes = JSON.parse(savedProcesses);
+        const completed = processes.filter((p: any) => p.status === "Completed");
+        setAvailableItems(prev => {
+          // Only add if not already present
+          const existingIds = new Set(prev.map(item => item.id));
+          const newItems = completed.filter((p: any) => !existingIds.has(p.itemId)).map((p: any) => ({
+            id: p.itemId,
+            department: p.machine || "",
+            items: p.process || "Sterilized Item",
+            quantity: 1, // Default, adjust if you have quantity info
+            status: "Sterilized",
+            readyTime: p.endTime || "",
+            sterilizationId: p.id,
+            machine: p.machine,
+            process: p.process,
+          }));
+          return [...prev, ...newItems];
+        });
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedRequests = localStorage.getItem("cssd_requests");
+    if (savedRequests) {
+      try {
+        const requests = JSON.parse(savedRequests);
+        const filtered = requests.filter((r: any) => r.status === "Requested" || r.status === "In Progress").map((r: any) => r.id);
+        setRequestIds(filtered);
+      } catch {
+        setRequestIds([]);
+      }
+    }
+  }, []);
+
   const handleIssueItem = (event: React.FormEvent) => {
     event.preventDefault();
-    const formData = new FormData(event.target as HTMLFormElement);
-    const requestId = formData.get("requestId") as string;
-    const outlet = formData.get("outlet") as string;
-
-    const itemToIssue = availableItems.find((item) => item.id === requestId);
+    if (!selectedRequestId || !selectedOutlet) return;
+    const itemToIssue = availableItems.find((item) => item.id === selectedRequestId);
     if (!itemToIssue) return;
-
     const newIssue = {
       id: `ISS${String(issuedItems.length + 1).padStart(3, "0")}`,
       requestId: itemToIssue.id,
-      department: outlet,
+      department: selectedOutlet,
       items: itemToIssue.items,
       quantity: itemToIssue.quantity,
       issuedTime: new Date().toLocaleTimeString("en-US", {
@@ -90,176 +151,168 @@ const IssueItem = ({ sidebarCollapsed, toggleSidebar }) => {
       issuedDate: new Date().toISOString().split("T")[0],
       status: "Issued",
     };
-
     setIssuedItems([...issuedItems, newIssue]);
-    setAvailableItems((prev) => prev.filter((item) => item.id !== requestId));
-
-    toast({
-      title: "Item Issued Successfully",
-      description: `${newIssue.items} issued to ${outlet}`,
-    });
-
-    (event.target as HTMLFormElement).reset();
+    setAvailableItems((prev) => prev.filter((item) => item.id !== selectedRequestId));
+    setSelectedRequestId("");
+    setSelectedOutlet("");
+    // Optionally show a notification here
+    // alert(`${newIssue.items} issued to ${selectedOutlet}`);
   };
 
   const filteredIssuedItems = issuedItems.filter(
-    (item) =>
+    (item: any) =>
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Table columns for issued items
+  const columns = [
+    { key: "id", header: "Issue ID" },
+    { key: "requestId", header: "Request ID" },
+    { key: "department", header: "Department" },
+    { key: "items", header: "Items" },
+    { key: "quantity", header: "Qty" },
+    { key: "issuedTime", header: "Time" },
+    { key: "issuedDate", header: "Date" },
+    { key: "status", header: "Status", render: (row: any) => (
+      <span className={`status-badge status-${row.status.toLowerCase()}`}>{row.status}</span>
+    ) },
+  ];
+
+  // Summary values
+  const availableCount = availableItems.length;
+  const today = new Date().toISOString().split("T")[0];
+  const issuedTodayCount = issuedItems.filter((item: any) => item.issuedDate === today).length;
+  const totalIssuedCount = issuedItems.length;
+
   return (
     <>
-      <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />
-      <div className="issue-container">
-        <div className="issue-header">
-          <h1>Issue Item</h1>
-          <p>Issue sterilized items to departments and outlets</p>
-        </div>
+      <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator/>
+      <PageContainer>
+      <SectionHeading 
+          title="Issue Item" 
+          subtitle="Issue sterilized items to departments and outlets" 
+          className="Issueitem-heading w-100" 
+        />
+         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
+          <Cards title="Available" subtitle={availableCount} />
+          <Cards title="Issued Today" subtitle={issuedTodayCount} />
+          <Cards title="Total Issued" subtitle={totalIssuedCount} />
+         </div>
 
-        <div className="issue-main-grid">
-          <Card className="issue-card">
-            <CardHeader>
-              <CardTitle>
-                <Send /> Issue Items
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="issue-card">
+            <div className="issue-card-header">
+              <Send className="icon"  /> Issue Items
+        </div>
+            <div className="issue-card-content">
               <form onSubmit={handleIssueItem} className="form-grid">
-                <div>
-                  <Label htmlFor="requestId">Request ID</Label>
-                  <Select name="requestId" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select sterilized item to issue" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableItems.length === 0 ? (
-                        <SelectItem value="" disabled>
-                          No sterilized items available
-                        </SelectItem>
-                      ) : (
-                        availableItems.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.id} - {item.items} ({item.quantity})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="requestId">Request ID</label>
+                  <select
+                    id="requestId"
+                    name="requestId"
+                    className="form-input"
+                    value={selectedRequestId}
+                    onChange={(e) => setSelectedRequestId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select sterilized item to issue</option>
+                    {Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
+                      const item = availableItems.find(i => i.id === id);
+                      return (
+                        <option key={id} value={id}>
+                          {id}{item ? ` - ${item.items} (${item.quantity})` : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
-
-                <div>
-                  <Label htmlFor="outlet">Department/Outlet</Label>
-                  <Select name="outlet" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select destination" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="OR-1">Operating Room 1</SelectItem>
-                      <SelectItem value="OR-2">Operating Room 2</SelectItem>
-                      <SelectItem value="ICU">ICU</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="outlet">Department/Outlet</label>
+                  <select
+                    id="outlet"
+                    name="outlet"
+                    className="form-input"
+                    value={selectedOutlet}
+                    onChange={(e) => setSelectedOutlet(e.target.value)}
+                    required
+                  >
+                    <option value="">Select destination</option>
+                    <option value="OR-1">Operating Room 1</option>
+                    <option value="OR-2">Operating Room 2</option>
+                    <option value="ICU">ICU</option>
+                  </select>
                 </div>
-
-                <div className="form-time">
+                <div className="form-row">
                   <div>
-                    <Label>Time</Label>
-                    <Input
-                      type="time"
+                    <label className="form-label">Issue Time</label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
                       readOnly
-                      defaultValue={new Date().toLocaleTimeString("en-US", {
-                        hour12: false,
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
                     />
                   </div>
                   <div>
-                    <Label>Date</Label>
-                    <Input
-                      type="date"
+                    <label className="form-label">Issue Date</label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      value={new Date().toISOString().split("T")[0]}
                       readOnly
-                      defaultValue={new Date().toISOString().split("T")[0]}
                     />
                   </div>
                 </div>
-
-                <Button type="submit">Issue Item</Button>
+                <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedRequestId || !selectedOutlet}>
+                  Issue Item
+                </ButtonWithGradient>
               </form>
-            </CardContent>
-          </Card>
-
-          <Card className="issue-card">
-            <CardHeader>
-              <CardTitle>
-                <CheckCircle /> Available Items
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="available-items">
-                {availableItems.map((item) => (
-                  <div key={item.id} className="available-item">
-                    <div>
-                      <h4>{item.id}</h4>
-                      <p>{item.items}</p>
-                      <p>Qty: {item.quantity}</p>
-                    </div>
-                    <span>{item.status}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="issue-table">
-          <CardHeader>
-            <CardTitle>
-              <Clock /> Issue History
-            </CardTitle>
-            <div className="search-container">
-              <Search className="search-icon" />
-              <Input
-                placeholder="Search issued items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
             </div>
-          </CardHeader>
-          <CardContent>
-            <table>
-              <thead>
-                <tr>
-                  <th>Issue ID</th>
-                  <th>Request ID</th>
-                  <th>Department</th>
-                  <th>Items</th>
-                  <th>Qty</th>
-                  <th>Time</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredIssuedItems.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.id}</td>
-                    <td>{item.requestId}</td>
-                    <td>{item.department}</td>
-                    <td>{item.items}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.issuedTime}</td>
-                    <td>{item.issuedDate}</td>
-                    <td>{item.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <div className="issue-card">
+            <div className="issue-card-header">
+              <CheckCircle className="icon" /> Available Items
+            </div>
+            <div className="issue-card-content">
+              <div className="available-items">
+                {availableItems.length === 0 ? (
+                  <div>No sterilized items available</div>
+                ) : (
+                  availableItems.map((item) => (
+                    <div className="available-item" key={item.id}>
+                    <div>
+                        <div className="item-id">{item.id}</div>
+                        <div className="item-name">{item.items}</div>
+                        <div className="item-details">
+                          Qty: {item.quantity} | Ready: {item.readyTime}
+                        </div>
+                        <div className="item-sterilized">
+                          Sterilized: {item.machine} - {item.process}
+                        </div>
+                      </div>
+                      <span className="status-badge status-sterilized">Sterilized</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="issue-table">
+          <div className="issue-table-header">
+             Issue History
+            <div className="search-container">
+              <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+          </div>
+          <div className="issue-table-content">
+            <Table columns={columns} data={filteredIssuedItems} />
+          </div>
+        </div>
+       
+      </PageContainer>
       <Footer />
     </>
   );

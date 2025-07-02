@@ -287,6 +287,17 @@
     }
   }
   
+  .dashboard-section-card h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+  }
+  .dashboard-section-card p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+  }
+  
   
 
 

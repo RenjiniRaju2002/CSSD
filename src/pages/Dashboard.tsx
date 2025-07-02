@@ -19,16 +19,54 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
   
   // Mock stats for demonstration - replace with actual data
   const [stats, setStats] = useState({
-    activeRequests: 5,
-    sterilizationInProgress: 3,
-    itemsReady: 12,
-    lowStockItems: 2
+    activeRequests: 0,
+    sterilizationInProgress: 0,
+    itemsReady: 0,
+    lowStockItems: 0
   });
 
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Get active requests from localStorage (status 'Requested' or 'In Progress')
+    const savedRequests = localStorage.getItem('cssd_requests');
+    if (savedRequests) {
+      try {
+        const requests = JSON.parse(savedRequests);
+        const activeCount = requests.filter((r: any) => r.status === 'Requested' || r.status === 'In Progress').length;
+        setStats(s => ({ ...s, activeRequests: activeCount }));
+      } catch {}
+    }
+    // Get sterilization in progress count from localStorage
+    const savedProcesses = localStorage.getItem('sterilizationProcesses');
+    if (savedProcesses) {
+      try {
+        const processes = JSON.parse(savedProcesses);
+        const inProgressCount = processes.filter((p: any) => p.status === 'In Progress').length;
+        setStats(s => ({ ...s, sterilizationInProgress: inProgressCount }));
+      } catch {}
+    }
+    // Get available items count from localStorage
+    const savedAvailable = localStorage.getItem('availableItems');
+    if (savedAvailable) {
+      try {
+        const available = JSON.parse(savedAvailable);
+        setStats(s => ({ ...s, itemsReady: available.length }));
+      } catch {}
+    }
+    // Get low stock count from localStorage
+    const savedStock = localStorage.getItem('stockItems');
+    if (savedStock) {
+      try {
+        const stock = JSON.parse(savedStock);
+        const lowStockCount = stock.filter((item: any) => item.status === 'Low Stock').length;
+        setStats(s => ({ ...s, lowStockItems: lowStockCount }));
+      } catch {}
+    }
   }, []);
 
   const handleNewRequest = () => navigate('/request-management');
@@ -56,7 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
 
         <div className="dashboard-sections-row">
           <div className="dashboard-section-card recent-activity-card">
-            <div className="section-header">
+            <div className="">
               <h3>Recent Activity</h3>
               <p>Latest CSSD operations</p>
             </div>
@@ -81,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
           </div>
 
           <div className="dashboard-section-card quick-actions-card">
-            <div className="section-header">
+            <div className="">
               <h3>Quick Actions</h3>
               <p>Common CSSD tasks</p>
             </div>

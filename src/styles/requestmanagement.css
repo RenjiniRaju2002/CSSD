@@ -42,6 +42,9 @@
   .card-content {
     padding: 20px;
   }
+  .card-content .search{
+    /* margin-bottom: 10px; */
+  }
   
   /* Forms */
   .form-group {

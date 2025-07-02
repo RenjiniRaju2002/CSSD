@@ -29,18 +29,19 @@
     margin-bottom: 1rem;
   }
   
-  .search-input {
+  .search-input2 {
     position: relative;
     flex: 1;
+    /* border:1px solid red !important; */
   }
   
-  .search-input input {
+  /* .search-input input {
     width: 100%;
     padding: 0.5rem 0.75rem 0.5rem 2rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 0.95rem;
-  }
+  } */
   
   .search-icon {
     position: absolute;

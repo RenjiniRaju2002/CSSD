@@ -24,6 +24,13 @@
   outline: none;
 }
 
+.btn-with-gradient.btn-sm {
+  padding: 0 8px;
+  height: 28px;
+  min-width: 32px;
+  font-size: 13px;
+}
+
 .spinner {
   display: inline-block;
   width: 1em;

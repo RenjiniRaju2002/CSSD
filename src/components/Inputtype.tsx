@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/input.css';
+import '../styles/inputtype.css';
 
 interface Option {
   label: string;
