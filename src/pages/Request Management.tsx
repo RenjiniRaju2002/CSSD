@@ -12,54 +12,7 @@ import Searchbar from "../components/Searchbar";
 import ButtonWithGradient from "../components/ButtonWithGradient";
 import SectionHeading from "../components/SectionHeading";
 
-// Initial mock data for previous requests
-const initialData = [
-  {
-    id: "REQ001",
-    department: "Cardiology",
-    items: "Syringe, Gloves",
-    quantity: 10,
-    priority: "High",
-    status: "Requested",
-    date: "2024-06-01",
-    time: "10:00 AM"
-  },
-  {
-    id: "REQ002",
-    department: "Neurology",
-    items: "Scalpel, Mask",
-    quantity: 5,
-    priority: "Medium",
-    status: "In Progress",
-    date: "2024-06-02",
-    time: "11:30 AM"
-  },
-  {
-    id: "REQ003",
-    department: "Orthopedics",
-    items: "Bandage, Tape",
-    quantity: 8,
-    priority: "Low",
-    status: "Completed",
-    date: "2024-06-03",
-    time: "09:15 AM"
-  }
-];
 
-// Initial mock data for kits
-const initialKits = [
-  {
-    id: "KIT001",
-    name: "Surgery Kit",
-    department: "OR-2",
-    items: "Scalpel, Forceps, Gauze",
-    quantity: 5,
-    priority: "High",
-    status: "Active",
-    date: format(new Date(), 'yyyy-MM-dd'),
-    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
-];
 
 interface Request {
   id: string;
@@ -91,7 +44,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
   const [kitSearchTerm, setKitSearchTerm] = useState("");
   const [kitName, setKitName] = useState("");
   const [kitDepartment, setKitDepartment] = useState("");
@@ -99,18 +52,24 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [kitItemName, setKitItemName] = useState("");
   const [kitItemQuantity, setKitItemQuantity] = useState("");
   const [kitItems, setKitItems] = useState<any[]>([]);
-  const [createdKits, setCreatedKits] = useState(() => {
-    const savedKits = localStorage.getItem('cssd_kits');
-    return savedKits ? JSON.parse(savedKits) : initialKits;
-  });
+  const [createdKits, setCreatedKits] = useState<any[]>([]);
   const [selectedKit, setSelectedKit] = useState<any>(null);
   const [showKitDetails, setShowKitDetails] = useState(false);
 
+  // Fetch requests from database
   useEffect(() => {
-    fetch('http://localhost:3001/cssd_requests')
+    fetch('http://192.168.50.132:3001/cssd_requests')
       .then(res => res.json())
       .then(data => setRequests(data))
-      .catch(() => setRequests(initialData));
+      .catch(() => setRequests([]));
+  }, []);
+
+  // Fetch created kits from database
+  useEffect(() => {
+    fetch('http://192.168.50.132:3001/createdKits')
+      .then(res => res.json())
+      .then(data => setCreatedKits(data))
+      .catch(() => setCreatedKits([]));
   }, []);
 
   // Save kits to localStorage whenever they change
@@ -122,12 +81,19 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const sortedRequests = [...requests].sort((a, b) => a.id.localeCompare(b.id));
   const filteredRequests = sortedRequests.filter((req) => {
     const matchesSearch =
-      req.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.items.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPriority = filterPriority === "all" || req.priority === filterPriority;
-    const matchesStatus = filterStatus === "all" || req.status === filterStatus;
-    return matchesSearch && matchesPriority && matchesStatus;
+      req.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      req.items?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      filterStatus === "all" ||
+      req.status?.toLowerCase() === filterStatus.toLowerCase();
+
+    const matchesPriority =
+      filterPriority === "all" ||
+      req.priority?.toLowerCase() === filterPriority.toLowerCase();
+
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
@@ -246,13 +212,13 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
     // POST to API
-    await fetch('http://localhost:3001/createdKits', {
+    await fetch('http://192.168.50.132:3001/createdKits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newKit)
     });
     // Fetch updated kits
-    const res = await fetch('http://localhost:3001/createdKits');
+    const res = await fetch('http://192.168.50.132:3001/createdKits');
     const updated = await res.json();
     setCreatedKits(updated);
     // Reset form and close modal
@@ -266,6 +232,20 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const handleViewKit = (kit: any) => {
     setSelectedKit(kit);
     setShowKitDetails(true);
+  };
+
+  const handleStatusUpdate = async (id: string, newStatus: string) => {
+    const updatedRequests = requests.map((req) =>
+      req.id === id ? { ...req, status: newStatus } : req
+    );
+    setRequests(updatedRequests);
+
+    // POST to API
+    await fetch(`http://192.168.50.132:3001/cssd_requests/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
   };
 
   return (
@@ -465,25 +445,25 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         <div className="card-content">
             <div className="flex justify-between items-center mb-4">
               <div className="flex gap-2">
-                <select 
+                <select
+                  className="form-input text-sm"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="requested">Requested</option>
+                  <option value="in progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <select
                   className="form-input text-sm"
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
                 >
                   <option value="all">All Priorities</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-                <select 
-                  className="form-input text-sm"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="Requested">Requested</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
                 </select>
               </div>
               <div className="relative flex-1 max-w-md ml-auto">
@@ -501,14 +481,38 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
               { key: 'priority', header: 'Priority' },
               { key: 'status', header: 'Status' },
               { key: 'date', header: 'Date' },
-              { key: 'time', header: 'Time' }
+              { key: 'time', header: 'Time' },
+        
             ]}
             data={currentRequests}
           />
 
-          {filteredRequests.length === 0 && (
+          {currentRequests.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               No requests found matching your criteria.
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-4">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </div>
           )}
           </div>

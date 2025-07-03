@@ -28,24 +28,6 @@ interface IssueItemProps {
   toggleSidebar?: () => void;
 }
 
-const defaultAvailableItems: AvailableItem[] = [
-  {
-    id: "REQ001",
-    department: "OR-1",
-    items: "Surgery Kit",
-    quantity: 2,
-    status: "Sterilized",
-    readyTime: "14:00",
-  },
-  {
-    id: "REQ002",
-    department: "OR-2",
-    items: "Instruments",
-    quantity: 3,
-    status: "Sterilized",
-    readyTime: "15:00",
-  },
-];
 
 const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleSidebar }) => {
   const [issuedItems, setIssuedItems] = useState(() => {
@@ -53,32 +35,13 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     return savedItems
       ? JSON.parse(savedItems)
       : [
-          {
-            id: "ISS001",
-            requestId: "REQ001",
-            department: "OR-1",
-            items: "Surgery Kit",
-            quantity: 2,
-            issuedTime: "14:30",
-            issuedDate: "2024-06-10",
-            status: "Issued",
-          },
-          {
-            id: "ISS002",
-            requestId: "REQ002",
-            department: "OR-2",
-            items: "Instruments",
-            quantity: 3,
-            issuedTime: "15:15",
-            issuedDate: "2024-06-10",
-            status: "Issued",
-          },
+          
         ];
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [availableItems, setAvailableItems] = useState<AvailableItem[]>(() => {
     const saved = localStorage.getItem("availableItems");
-    return saved ? JSON.parse(saved) : defaultAvailableItems;
+    return saved ? JSON.parse(saved) : [];
   });
   const [selectedRequestId, setSelectedRequestId] = useState("");
   const [selectedOutlet, setSelectedOutlet] = useState("");
@@ -88,17 +51,15 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     localStorage.setItem("issuedItems", JSON.stringify(issuedItems));
   }, [issuedItems]);
 
-  useEffect(() => {
-    localStorage.setItem("availableItems", JSON.stringify(availableItems));
-  }, [availableItems]);
+  // This useEffect is no longer needed since we're fetching from database
 
   // Sync availableItems with completed sterilization processes
   useEffect(() => {
-    const savedProcesses = localStorage.getItem("sterilizationProcesses");
-    if (savedProcesses) {
-      try {
-        const processes = JSON.parse(savedProcesses);
-        const completed = processes.filter((p: any) => p.status === "Completed");
+    fetch('http://192.168.50.132:3001/sterilizationProcesses')
+      .then(res => res.json())
+      .then(data => {
+        const completed = data.filter((p: any) => p.status === "Completed");
+        console.log('Completed sterilization processes:', completed);
         setAvailableItems(prev => {
           // Only add if not already present
           const existingIds = new Set(prev.map(item => item.id));
@@ -108,15 +69,15 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
             items: p.process || "Sterilized Item",
             quantity: 1, // Default, adjust if you have quantity info
             status: "Sterilized",
-            readyTime: p.endTime || "",
+            readyTime: p.endTime || new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" }),
             sterilizationId: p.id,
             machine: p.machine,
             process: p.process,
           }));
           return [...prev, ...newItems];
         });
-      } catch {}
-    }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -272,8 +233,11 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
             </div>
           </div>
           <div className="issue-card">
-            <div className="issue-card-header">
-              <CheckCircle className="icon" /> Available Items
+            <div className="issue-card-header flex items-center justify-between">
+              <div className="flex items-center">
+                <CheckCircle className="icon" /> Available Items
+              </div>
+          
             </div>
             <div className="issue-card-content">
               <div className="available-items">

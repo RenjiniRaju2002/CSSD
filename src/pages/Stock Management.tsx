@@ -29,19 +29,18 @@ const StockManagement: React.FC<StockManagementProps> = ({ sidebarCollapsed = fa
     ]
   };
 
-  const [stockItems, setStockItems] = useState(() => {
-    const savedItems = localStorage.getItem('stockItems');
-    return savedItems ? JSON.parse(savedItems) : initialData.stockItems;
-  });
-
+  const [stockItems, setStockItems] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [showEditItem, setShowEditItem] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('stockItems', JSON.stringify(stockItems));
-  }, [stockItems]);
+    fetch('http://192.168.50.132:3001/stockItems')
+      .then(res => res.json())
+      .then(data => setStockItems(data))
+      .catch(() => setStockItems([]));
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -51,7 +50,7 @@ const StockManagement: React.FC<StockManagementProps> = ({ sidebarCollapsed = fa
     }
   };
 
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const quantity = parseInt(formData.get("quantity") as string);
@@ -67,8 +66,18 @@ const StockManagement: React.FC<StockManagementProps> = ({ sidebarCollapsed = fa
       status: quantity > minLevel ? "In Stock" : "Low Stock"
     };
 
-    const updatedItems = [...stockItems, newItem];
-    setStockItems(updatedItems);
+    // Save to backend
+    await fetch('http://192.168.50.132:3001/stockItems', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newItem)
+    });
+
+    // Fetch updated stock items
+    const res = await fetch('http://192.168.50.132:3001/stockItems');
+    const updated = await res.json();
+    setStockItems(updated);
+
     setShowAddItem(false);
     toast.success('Item added successfully!');
   };
@@ -134,7 +143,7 @@ const StockManagement: React.FC<StockManagementProps> = ({ sidebarCollapsed = fa
 
         <div className="inventory-box">
           <div className="inventory-header-top">
-            <div className="inventory-title"><Package color="#008080" /> Inventory Management</div>
+            
            
         </div>
        

@@ -53,20 +53,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     ],
   };
 
-  const [processes, setProcesses] = useState<SterilizationProcess[]>(() => {
-    const savedProcesses = localStorage.getItem('sterilizationProcesses');
-    try {
-      return savedProcesses ? JSON.parse(savedProcesses) : [
-        { id: "STE001", machine: "Autoclave-1", process: "Steam Sterilization", itemId: "REQ001", startTime: "10:30", endTime: "", status: "Paused", duration: 45 },
-        { id: "STE002", machine: "Autoclave-2", process: "Chemical Sterilization", itemId: "REQ002", startTime: "09:15", endTime: "", status: "Completed", duration: 75 },
-        { id: "STE003", machine: "Chemical Sterilizer-1", process: "Plasma Sterilization", itemId: "REQ002", startTime: "16:32", endTime: "", status: "In Progress", duration: 60 },
-        { id: "STE004", machine: "Chemical Sterilizer-1", process: "Chemical Sterilization", itemId: "REQ002", startTime: "17:51", endTime: "", status: "Completed", duration: 75 },
-        { id: "STE005", machine: "Chemical Sterilizer-1", process: "Chemical Sterilization", itemId: "REQ006", startTime: "14:28", endTime: "", status: "Completed", duration: 75 },
-      ];
-    } catch {
-      return [];
-    }
-  });
+  const [processes, setProcesses] = useState<SterilizationProcess[]>([]);
 
   const [selectedMachine, setSelectedMachine] = useState("");
   const [selectedProcess, setSelectedProcess] = useState("");
@@ -77,20 +64,24 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Fetch sterilization processes from database
   useEffect(() => {
-    localStorage.setItem('sterilizationProcesses', JSON.stringify(processes));
-  }, [processes]);
+    fetch('http://192.168.50.132:3001/sterilizationProcesses')
+      .then(res => res.json())
+      .then(data => setProcesses(data))
+      .catch(() => setProcesses([]));
+  }, []);
 
   useEffect(() => {
-    const savedRequests = localStorage.getItem('cssd_requests');
-    if (savedRequests) {
-      try {
-        const requests = JSON.parse(savedRequests);
-        setAvailableRequests(requests.filter((r: any) => r.status === "Completed"));
-      } catch (error) {
-        setAvailableRequests([]);
-      }
-    }
+    // Fetch completed requests from database
+    fetch('http://192.168.50.132:3001/cssd_requests')
+      .then(res => res.json())
+      .then(data => {
+        const completedRequests = data.filter((r: any) => r.status === "Completed");
+        console.log('Completed requests for sterilization:', completedRequests);
+        setAvailableRequests(completedRequests);
+      })
+      .catch(() => setAvailableRequests([]));
   }, []);
 
   // Machine status update handler
@@ -99,17 +90,27 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   };
 
   // Process actions
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setProcesses(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    const updatedProcesses = processes.map(p => p.id === id ? { ...p, status: newStatus } : p);
+    setProcesses(updatedProcesses);
+
+    // Update in database
+    await fetch(`http://192.168.50.132:3001/sterilizationProcesses/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
   };
+  
   const handleResume = (id: string) => handleStatusChange(id, "In Progress");
   const handlePause = (id: string) => handleStatusChange(id, "Paused");
   const handleComplete = (id: string) => handleStatusChange(id, "Completed");
 
   // Start new process
-  const startSterilization = (event: React.FormEvent) => {
+  const startSterilization = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedMachine || !selectedProcess || !selectedRequestId) return;
+    
     const newProcess: SterilizationProcess = {
       id: `STE${String(processes.length + 1).padStart(3, '0')}`,
       machine: selectedMachine,
@@ -120,7 +121,19 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
       status: "In Progress",
       duration: sterilizationMethods.find(method => method.name === selectedProcess)?.duration || 45
     };
-    setProcesses([...processes, newProcess]);
+
+    // Save to database
+    await fetch('http://192.168.50.132:3001/sterilizationProcesses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newProcess)
+    });
+
+    // Fetch updated processes
+    const res = await fetch('http://192.168.50.132:3001/sterilizationProcesses');
+    const updated = await res.json();
+    setProcesses(updated);
+
     setSelectedMachine("");
     setSelectedProcess("");
     setSelectedRequestId("");
@@ -222,12 +235,33 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                 </div>
                 <div className="mb-4">
                   <label className="form-label">Item/Request ID</label>
-                  <select className="form-input" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
+                  <div className="flex gap-2">
+                    <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
                     <option value="">Select completed request ID</option>
                     {availableRequests.map(req => (
-                      <option key={req.id} value={req.id}>{req.id}</option>
+                        <option key={req.id} value={req.id}>
+                          {req.id} - {req.department} ({req.items})
+                        </option>
                     ))}
                   </select>
+                    <ButtonWithGradient 
+                      type="button" 
+                      className="button-gradient px-3"
+                      onClick={() => {
+                        fetch('http://192.168.50.132:3001/cssd_requests')
+                          .then(res => res.json())
+                          .then(data => {
+                            const completedRequests = data.filter((r: any) => r.status === "Completed");
+                            setAvailableRequests(completedRequests);
+                          });
+                      }}
+                    >
+                      Refresh
+                    </ButtonWithGradient>
+                  </div>
+                  {availableRequests.length === 0 && (
+                    <p className="text-sm text-gray-500 mt-1">No completed requests available. Complete a request in Receive Items first.</p>
+                  )}
                 </div>
                 <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
                   Start Sterilization Process

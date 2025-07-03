@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Download, BarChart3, Plus, BarChart2, TrendingUp, ClipboardList } from "lucide-react";
@@ -41,12 +41,7 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
     { title: "Total Surgeries", value: 4, description: "Procedures tracked", icon: <ClipboardList size={20} color="#a78bfa" />, color: "#a78bfa" },
   ];
 
-  const [tableData, setTableData] = useState([
-    { id: "SURG001", type: "Cardiac Surgery", dept: "OR-1", date: "2024-06-10", before: 25, after: 18, used: 7, items: "Surgery Kit, Forceps, Clamps" },
-    { id: "SURG002", type: "Knee Replacement", dept: "OR-2", date: "2024-06-10", before: 15, after: 12, used: 3, items: "Orthopedic Kit, Drills" },
-    { id: "SURG003", type: "Appendectomy", dept: "OR-1", date: "2024-06-09", before: 20, after: 17, used: 3, items: "Basic Surgery Kit" },
-    { id: "SURG004", type: "Hip replacement", dept: "OR-2", date: "2024-06-12", before: 20, after: 15, used: 5, items: "Orthopedic Kit, Drills" },
-  ]);
+  const [tableData, setTableData] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     id: "",
@@ -58,6 +53,14 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
     used: "",
     items: "",
   });
+
+  // Fetch consumption records from database
+  useEffect(() => {
+    fetch('http://192.168.50.132:3001/consumptionRecords')
+      .then(res => res.json())
+      .then(data => setTableData(data))
+      .catch(() => setTableData([]));
+  }, []);
 
   const tableColumns = [
     { key: "id", header: "Surgery ID" },
@@ -164,14 +167,28 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
               <h2>Add Consumption Record</h2>
               <button className="close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
             </div>
-            <form onSubmit={e => {
+            <form onSubmit={async e => {
               e.preventDefault();
-              setTableData([...tableData, {
+              
+              const newRecord = {
                 ...form,
                 before: Number(form.before),
                 after: Number(form.after),
                 used: Number(form.used),
-              }]);
+              };
+
+              // Save to database
+              await fetch('http://192.168.50.132:3001/consumptionRecords', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newRecord)
+              });
+
+              // Fetch updated records
+              const res = await fetch('http://192.168.50.132:3001/consumptionRecords');
+              const updated = await res.json();
+              setTableData(updated);
+
               setForm({ id: "", type: "", dept: "", date: "", before: "", after: "", used: "", items: "" });
               setShowAddModal(false);
             }}>

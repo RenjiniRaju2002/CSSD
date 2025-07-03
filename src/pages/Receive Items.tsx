@@ -56,7 +56,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetch('http://localhost:3001/cssd_requests')
+    fetch('http://192.168.50.132:3001/cssd_requests')
       .then(res => res.json())
       .then(data => setRequestedItems(data))
       .catch(() => setRequestedItems([]));
@@ -88,14 +88,14 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   );
 
   const handleStatusUpdate = (itemId: string, newStatus: string) => {
-    fetch(`http://localhost:3001/cssd_requests/${itemId}`, {
+    fetch(`http://192.168.50.132:3001/cssd_requests/${itemId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
       .then(res => res.json())
       .then(() => {
-        fetch('http://localhost:3001/cssd_requests')
+        fetch('http://192.168.50.132:3001/cssd_requests')
           .then(res => res.json())
           .then(data => setRequestedItems(data));
       });
