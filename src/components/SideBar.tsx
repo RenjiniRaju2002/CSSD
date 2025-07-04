@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "../styles/Sidebar.css";
 // import { GraphIcon } from '@primer/octicons-react'
@@ -19,6 +19,24 @@ interface SideBarProps {
 }
 
 const SideBar: React.FC<SideBarProps> = ({ collapsed = false }) => {
+  const [search, setSearch] = useState("");
+
+  // Sidebar menu items
+  const menuItems = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/request-management", label: "Request Management" },
+    { to: "/receive-items", label: "Receive Items" },
+    { to: "/sterilization-process", label: "Sterilization Process" },
+    { to: "/issue-item", label: "Issue Item" },
+    { to: "/stock-management", label: "Stock Management" },
+    { to: "/consumption-reports", label: "Consumption Reports" },
+  ];
+
+  // Filter menu items by search
+  const filteredMenuItems = menuItems.filter(item =>
+    item.label.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="sidebar-content">
@@ -51,6 +69,8 @@ const SideBar: React.FC<SideBarProps> = ({ collapsed = false }) => {
             type="text"
             className="searchbar"
             placeholder="Search Menu- Ctrl + M"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
       </div>
@@ -68,106 +88,23 @@ const SideBar: React.FC<SideBarProps> = ({ collapsed = false }) => {
             </NavLink>
           </li>
           <ul className="sidebar-sublist">
-            <li>
-              <NavLink
-                to="/dashboard"
-                style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Dashboard" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Dashboard"}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/request-management" style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Request Management" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Request Management"}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/receive-items" style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Receive Items" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Receive Items"}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/sterilization-process" style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Sterilization Process" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Sterilization Process"}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/issue-item" style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Issue Item" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Issue Item"}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/stock-management" style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Stock Management" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Stock Management"}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/consumption-reports" style={{fontWeight:400,color:"#cccccc"}}
-                className={({ isActive }) =>
-                  isActive ? "nav-item active" : "nav-item"
-                }
-                title={collapsed ? "Consumption Reports" : ""}
-              >
-                <span>
-                  <FontAwesomeIcon icon={faCaretRight} />
-                </span>
-                {!collapsed && "Consumption Reports"}
-              </NavLink>
-            </li>
-            
+            {filteredMenuItems.map(item => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  style={{fontWeight:400,color:"#cccccc"}}
+                  className={({ isActive }) =>
+                    isActive ? "nav-item active" : "nav-item"
+                  }
+                  title={collapsed ? item.label : ""}
+                >
+                  <span>
+                    <FontAwesomeIcon icon={faCaretRight} />
+                  </span>
+                  {!collapsed && item.label}
+                </NavLink>
+              </li>
+            ))}
           </ul>
         </ul>
       </nav>

@@ -104,20 +104,38 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
   // Handlers
   const addItemToList = () => {
-    if (itemInput && itemQuantity && selectedDepartment && selectedPriority && selectedDate) {
-      setPendingItems([
-        ...pendingItems,
-        {
-          department: selectedDepartment,
-          priority: selectedPriority,
-          item: itemInput,
-          quantity: itemQuantity,
-          date: format(selectedDate, 'yyyy-MM-dd'),
-        },
-      ]);
-      setItemInput("");
-      setItemQuantity("");
+    if (!selectedDepartment) {
+      alert('Please enter the Outlet');
+      return;
     }
+    if (!selectedPriority) {
+      alert('Please enter the Priority');
+      return;
+    }
+    if (!itemInput) {
+      alert('Please enter the Item/Kit');
+      return;
+    }
+    if (!itemQuantity) {
+      alert('Please enter the Quantity');
+      return;
+    }
+    if (!selectedDate) {
+      alert('Please enter the Required Date');
+      return;
+    }
+    setPendingItems([
+      ...pendingItems,
+      {
+        department: selectedDepartment,
+        priority: selectedPriority,
+        item: itemInput,
+        quantity: itemQuantity,
+        date: format(selectedDate, 'yyyy-MM-dd'),
+      },
+    ]);
+    setItemInput("");
+    setItemQuantity("");
   };
 
   const handleCreateRequest = (e: React.FormEvent) => {
@@ -180,19 +198,33 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   };
 
   const handleAddKitItem = () => {
-    if (kitItemName && kitItemQuantity && kitDepartment && kitPriority) {
-      setKitItems([
-        ...kitItems,
+    if (!kitDepartment) {
+      alert('Please enter the Outlet');
+      return;
+    }
+    if (!kitPriority) {
+      alert('Please enter the Priority');
+      return;
+    }
+    if (!kitItemName) {
+      alert('Please enter the Item/Kit');
+      return;
+    }
+    if (!kitItemQuantity) {
+      alert('Please enter the Quantity');
+      return;
+    }
+    setKitItems([
+      ...kitItems,
       {
         department: kitDepartment,
         priority: kitPriority,
-          item: kitItemName,
-          quantity: kitItemQuantity,
-        },
-      ]);
-      setKitItemName("");
-      setKitItemQuantity("");
-    }
+        item: kitItemName,
+        quantity: kitItemQuantity,
+      },
+    ]);
+    setKitItemName("");
+    setKitItemQuantity("");
   };
 
   const handleSaveKit = async () => {
@@ -272,7 +304,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             <form onSubmit={handleSaveRequest}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div>
-                  <label className="form-label">Outlet</label>
+                  <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label>
                   <select 
                     className="form-input"
                     name="department"
@@ -287,7 +319,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   </select>
                 </div>
                 <div>
-                  <label className="form-label">Priority</label>
+                  <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label>
                   <select 
                     className="form-input"
                     name="priority"
@@ -302,7 +334,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="form-label">Item /Kit</label>
+                  <label className="form-label">Item /Kit <span style={{color: 'red'}}>*</span></label>
                   <input
                     type="text"
                     className="form-input"
@@ -312,7 +344,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   />
               </div>
               <div>
-                  <label className="form-label">Quantity</label>
+                  <label className="form-label">Quantity <span style={{color: 'red'}}>*</span></label>
                   <input
                     type="number"
                     className="form-input"
@@ -323,7 +355,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   />
               </div>
                 <div>
-                  <label className="form-label">Required Date</label>
+                  <label className="form-label">Required Date <span style={{color: 'red'}}>*</span></label>
                   <div className="flex items-center">
                     <input
                       type="date"
@@ -455,7 +487,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   <option value="in progress">In Progress</option>
                   <option value="completed">Completed</option>
                 </select>
-                <select
+                <select 
                   className="form-input text-sm"
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
@@ -537,7 +569,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
               <div className="card-content">
                 <form onSubmit={(e) => e.preventDefault()}>
                   <div className="form-group mb-4">
-                    <label className="form-label">Kit Name</label>
+                    <label className="form-label">Kit Name <span style={{color: 'red'}}>*</span></label>
                     <input 
                       type="text" 
                       className="form-input" 
@@ -551,7 +583,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                      <label className="form-label">Outlet</label>
+                      <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label>
                       <select 
                         className="form-input"
                         value={kitDepartment}
@@ -568,7 +600,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                       </div>
 
                       <div>
-                      <label className="form-label">Priority</label>
+                      <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label>
                       <select 
                         className="form-input"
                         value={kitPriority}
@@ -585,7 +617,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     </div>
 
                   <div className="mb-4">
-                    <label className="form-label">Item/Kit</label>
+                    <label className="form-label">Item/Kit <span style={{color: 'red'}}>*</span></label>
                     <input 
                       type="text" 
                       className="form-input" 
@@ -597,7 +629,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     </div>
 
                   <div className="mb-4">
-                    <label className="form-label">Quantity</label>
+                    <label className="form-label">Quantity <span style={{color: 'red'}}>*</span></label>
                     <input 
                         type="number" 
                       className="form-input" 

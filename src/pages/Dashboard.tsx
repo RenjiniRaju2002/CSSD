@@ -104,7 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
         console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
-      }
+    }
     };
 
     fetchDashboardData();
@@ -121,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
       {/* <div className="page-container"> */}
       <PageContainer>
         <div className="flex justify-between items-center mb-6">
-          <SectionHeading title="Dashboard" subtitle="Central Sterile Service Department" className="dashboard-heading" />
+        <SectionHeading title="Dashboard" subtitle="Central Sterile Service Department" className="dashboard-heading" />
           <button 
             onClick={refreshDashboard}
             disabled={loading}

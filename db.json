@@ -36,7 +36,7 @@
       "items": "scissors",
       "quantity": 4,
       "priority": "High",
-      "status": "Requested",
+      "status": "In Progress",
       "date": "2025-07-05",
       "time": "05:46 pm"
     },
@@ -46,7 +46,7 @@
       "items": "scissors, forcaps",
       "quantity": 6,
       "priority": "High",
-      "status": "Requested",
+      "status": "In Progress",
       "date": "2025-07-05",
       "time": "05:52 pm"
     },
@@ -56,7 +56,7 @@
       "items": "scissors",
       "quantity": 3,
       "priority": "High",
-      "status": "Requested",
+      "status": "Completed",
       "date": "2025-07-05",
       "time": "05:52 PM"
     },
@@ -66,9 +66,19 @@
       "items": "ddd",
       "quantity": 3,
       "priority": "High",
-      "status": "Requested",
+      "status": "Completed",
       "date": "2025-07-12",
       "time": "06:05 PM"
+    },
+    {
+      "id": "REQ008",
+      "department": "Cardiology",
+      "items": "eeeeee",
+      "quantity": 3,
+      "priority": "Low",
+      "status": "Completed",
+      "date": "2025-07-16",
+      "time": "10:56 AM"
     }
   ],
   "stockItems": [
@@ -98,8 +108,8 @@
       "process": "Chemical Sterilization",
       "itemId": "REQ001",
       "startTime": "10:25",
-      "endTime": "",
-      "status": "Completed",
+      "endTime": "13:08",
+      "status": "In Progress",
       "duration": 75
     },
     {
@@ -108,26 +118,121 @@
       "process": "Steam Sterilization",
       "itemId": "REQ003",
       "startTime": "17:12",
-      "endTime": "",
-      "status": "In Progress",
+      "endTime": "12:01",
+      "status": "Completed",
       "duration": 45
-    }
-  ],
-  "availableItems": [],
-  "createdKits": [
-    {
-      "id": "KIT002",
-      "name": "Medical kit",
-      "department": "Cardiology",
-      "items": "scissors, forcaps",
-      "quantity": 8,
-      "priority": "Medium",
-      "status": "Active",
-      "date": "2025-07-02",
-      "time": "02:22 pm"
     },
     {
-      "id": "KIT002",
+      "id": "STE003",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization",
+      "itemId": "REQ006",
+      "startTime": "10:37",
+      "endTime": "10:37",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE004",
+      "machine": "Autoclave-3",
+      "process": "Steam Sterilization",
+      "itemId": "REQ003",
+      "startTime": "10:40",
+      "endTime": "10:40",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE005",
+      "machine": "Autoclave-2",
+      "process": "Plasma Sterilization",
+      "itemId": "REQ007",
+      "startTime": "10:45",
+      "endTime": "10:45",
+      "status": "Completed",
+      "duration": 60
+    },
+    {
+      "id": "STE006",
+      "machine": "Autoclave-1",
+      "process": "Steam Sterilization",
+      "itemId": "REQ008",
+      "startTime": "10:57",
+      "endTime": "10:58",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE007",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ003",
+      "startTime": "11:12",
+      "endTime": "11:13",
+      "status": "Completed",
+      "duration": 75
+    }
+  ],
+  "availableItems": [
+    {
+      "id": "REQ001",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 10,
+      "status": "Sterilized",
+      "readyTime": "13:08",
+      "sterilizationId": "STE001",
+      "machine": "Autoclave-1",
+      "process": "Chemical Sterilization"
+    },
+    {
+      "id": "REQ006",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 3,
+      "status": "Sterilized",
+      "readyTime": "10:37",
+      "sterilizationId": "STE003",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization"
+    },
+    {
+      "id": "REQ003",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 3,
+      "status": "Sterilized",
+      "readyTime": "12:01",
+      "sterilizationId": "STE002",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization"
+    },
+    {
+      "id": "REQ007",
+      "department": "Cardiology",
+      "items": "ddd",
+      "quantity": 3,
+      "status": "Sterilized",
+      "readyTime": "10:45",
+      "sterilizationId": "STE005",
+      "machine": "Autoclave-2",
+      "process": "Plasma Sterilization"
+    },
+    {
+      "id": "REQ008",
+      "department": "Cardiology",
+      "items": "eeeeee",
+      "quantity": 3,
+      "status": "Sterilized",
+      "readyTime": "10:58",
+      "sterilizationId": "STE006",
+      "machine": "Autoclave-1",
+      "process": "Steam Sterilization"
+    }
+  ],
+  "createdKits": [
+    {
+      "id": "KIT001",
       "name": "Surgical kit",
       "department": "Cardiology",
       "items": "scissors, forcaps",
@@ -136,8 +241,51 @@
       "status": "Active",
       "date": "2025-07-03",
       "time": "12:08 pm"
+    },
+    {
+      "id": "KIT002",
+      "name": "medical kit",
+      "department": "Cardiology",
+      "items": "eeeeeeeeeeeeeeeeee",
+      "quantity": 6,
+      "priority": "High",
+      "status": "Active",
+      "date": "2025-07-04",
+      "time": "10:57 AM"
     }
   ],
-  "issueItems": [],
-  "consumptionRecords": []
+  "issueItems": [
+    {
+      "id": "ISS001",
+      "requestId": "REQ002",
+      "department": "OR-2",
+      "items": "forcaps",
+      "quantity": 3,
+      "issuedTime": "10:30",
+      "issuedDate": "2025-07-04",
+      "status": "Issued (Non-Sterilized)"
+    },
+    {
+      "id": "ISS002",
+      "requestId": "REQ005",
+      "department": "OR-1",
+      "items": "scissors, forcaps",
+      "quantity": 6,
+      "issuedTime": "10:58",
+      "issuedDate": "2025-07-04",
+      "status": "Issued (Non-Sterilized)"
+    }
+  ],
+  "consumptionRecords": [
+    {
+      "id": "SURG001",
+      "type": "Hip replacement",
+      "dept": "OR-3",
+      "date": "2025-07-05",
+      "before": 7,
+      "after": 4,
+      "used": 3,
+      "items": "3"
+    }
+  ]
 }

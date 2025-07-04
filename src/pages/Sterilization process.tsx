@@ -91,15 +91,95 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
 
   // Process actions
   const handleStatusChange = async (id: string, newStatus: string) => {
-    const updatedProcesses = processes.map(p => p.id === id ? { ...p, status: newStatus } : p);
+    const processToUpdate = processes.find(p => p.id === id);
+    if (!processToUpdate) return;
+
+    const updateData: any = { status: newStatus };
+    
+    // If completing the process, set the end time
+    if (newStatus === "Completed" && !processToUpdate.endTime) {
+      updateData.endTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    }
+
+    const updatedProcesses = processes.map(p => p.id === id ? { ...p, ...updateData } : p);
     setProcesses(updatedProcesses);
 
     // Update in database
     await fetch(`http://192.168.50.132:3001/sterilizationProcesses/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus })
+      body: JSON.stringify(updateData)
     });
+
+    // Show alert for pause/resume
+    if (newStatus === "Paused") {
+      alert("Process paused!");
+    } else if (newStatus === "In Progress") {
+      alert("Process resumed!");
+    }
+
+    // If completing the process, add to available items
+    if (newStatus === "Completed") {
+      try {
+        // Fetch the original request details
+        const requestResponse = await fetch(`http://192.168.50.132:3001/cssd_requests/${processToUpdate.itemId}`);
+        if (requestResponse.ok) {
+          const requestData = await requestResponse.json();
+          
+          // Create available item
+          const availableItem = {
+            id: processToUpdate.itemId,
+            department: requestData.department || processToUpdate.machine || "",
+            items: requestData.items || processToUpdate.process || "Sterilized Item",
+            quantity: requestData.quantity || 1,
+            status: "Sterilized",
+            readyTime: updateData.endTime || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+            sterilizationId: processToUpdate.id,
+            machine: processToUpdate.machine,
+            process: processToUpdate.process,
+          };
+
+          // Check if item already exists in available items
+          const existingItemsResponse = await fetch('http://192.168.50.132:3001/availableItems');
+          const existingItems = await existingItemsResponse.json();
+          const existingItem = existingItems.find((item: any) => item.id === processToUpdate.itemId);
+
+          if (!existingItem) {
+            // Add to available items database
+            const addResponse = await fetch('http://192.168.50.132:3001/availableItems', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(availableItem),
+            });
+            
+            if (addResponse.ok) {
+              console.log('Item added to available items:', availableItem);
+            } else {
+              console.error('Failed to add item to available items');
+            }
+          } else {
+            console.log('Item already exists in available items:', processToUpdate.itemId);
+            // Update the existing item with new sterilization info
+            const updateResponse = await fetch(`http://192.168.50.132:3001/availableItems/${processToUpdate.itemId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                readyTime: updateData.endTime,
+                sterilizationId: processToUpdate.id,
+                machine: processToUpdate.machine,
+                process: processToUpdate.process,
+              }),
+            });
+            
+            if (updateResponse.ok) {
+              console.log('Updated existing item with new sterilization info:', processToUpdate.itemId);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error adding item to available items:', error);
+      }
+    }
   };
   
   const handleResume = (id: string) => handleStatusChange(id, "In Progress");
@@ -109,7 +189,18 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   // Start new process
   const startSterilization = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectedMachine || !selectedProcess || !selectedRequestId) return;
+    if (!selectedMachine) {
+      alert('Please select the Machine');
+      return;
+    }
+    if (!selectedProcess) {
+      alert('Please select the Sterilization Method');
+      return;
+    }
+    if (!selectedRequestId) {
+      alert('Please select the Item/Request ID');
+      return;
+    }
     
     const newProcess: SterilizationProcess = {
       id: `STE${String(processes.length + 1).padStart(3, '0')}`,
@@ -216,7 +307,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
             <div className="card-content">
               <form onSubmit={startSterilization}>
                 <div className="mb-4">
-                  <label className="form-label">Select Machine</label>
+                  <label className="form-label">Select Machine <span style={{color: 'red'}}>*</span></label>
                   <select className="form-input" value={selectedMachine} onChange={e => setSelectedMachine(e.target.value)} required>
                     <option value="">Choose sterilization machine</option>
                     {machines.map(m => (
@@ -225,7 +316,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label className="form-label">Sterilization Method</label>
+                  <label className="form-label">Sterilization Method <span style={{color: 'red'}}>*</span></label>
                   <select className="form-input" value={selectedProcess} onChange={e => setSelectedProcess(e.target.value)} required>
                     <option value="">Choose sterilization method</option>
                     {sterilizationMethods.map(method => (
@@ -234,16 +325,16 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label className="form-label">Item/Request ID</label>
+                  <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label>
                   <div className="flex gap-2">
                     <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
-                    <option value="">Select completed request ID</option>
-                    {availableRequests.map(req => (
+                      <option value="">Select completed request ID</option>
+                      {availableRequests.map(req => (
                         <option key={req.id} value={req.id}>
                           {req.id} - {req.department} ({req.items})
                         </option>
-                    ))}
-                  </select>
+                      ))}
+                    </select>
                     <ButtonWithGradient 
                       type="button" 
                       className="button-gradient px-3"
@@ -290,8 +381,8 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
         </div>
         {/* Active Processes Table */}
         <div className="card mb-6 mt-2">
-          <div className="card-header flex items-center">
-            <Activity className="mr-2 text-blue-600" /> Active Processes
+          <div className="card-header">
+            <h2 className="card-title">Active Processes</h2>
           </div>
           <div className="card-content">
             <Table columns={columns} data={processes} />

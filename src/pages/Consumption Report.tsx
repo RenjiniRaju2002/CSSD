@@ -169,6 +169,38 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
             </div>
             <form onSubmit={async e => {
               e.preventDefault();
+              if (!form.id) {
+                alert('Please enter the Surgery ID');
+                return;
+              }
+              if (!form.type) {
+                alert('Please enter the Surgery Type');
+                return;
+              }
+              if (!form.dept) {
+                alert('Please enter the Department');
+                return;
+              }
+              if (!form.date) {
+                alert('Please enter the Date');
+                return;
+              }
+              if (!form.before) {
+                alert('Please enter the Before Count');
+                return;
+              }
+              if (!form.after) {
+                alert('Please enter the After Count');
+                return;
+              }
+              if (!form.used) {
+                alert('Please enter the Consumed count');
+                return;
+              }
+              if (!form.items) {
+                alert('Please enter the Items Used');
+                return;
+              }
               
               const newRecord = {
                 ...form,
@@ -193,35 +225,35 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
               setShowAddModal(false);
             }}>
               <div style={{ marginBottom: 16 }}>
-                <label>Surgery ID</label>
+                <label>Surgery ID <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="text" required value={form.id} onChange={e => setForm({ ...form, id: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>Surgery Type</label>
+                <label>Surgery Type <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="text" required value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>Department</label>
+                <label>Department <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="text" required value={form.dept} onChange={e => setForm({ ...form, dept: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>Date</label>
+                <label>Date <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="date" required value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>Before Count</label>
+                <label>Before Count <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="number" required value={form.before} onChange={e => setForm({ ...form, before: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>After Count</label>
+                <label>After Count <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="number" required value={form.after} onChange={e => setForm({ ...form, after: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>Consumed</label>
+                <label>Consumed <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="number" required value={form.used} onChange={e => setForm({ ...form, used: e.target.value })} />
               </div>
               <div style={{ marginBottom: 16 }}>
-                <label>Items Used</label>
+                <label>Items Used <span style={{color: 'red'}}>*</span></label>
                 <input className="form-input" type="text" required value={form.items} onChange={e => setForm({ ...form, items: e.target.value })} />
               </div>
               <ButtonWithGradient type="submit">Add Record</ButtonWithGradient>
