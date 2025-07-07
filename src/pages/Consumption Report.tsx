@@ -19,27 +19,10 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
-  const [reportGenerated, setReportGenerated] = useState(true); // Set true for demo
+  const [reportGenerated, setReportGenerated] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-
-  const lineChartData = [
-    { week: "Week 8", count: 10 },
-    { week: "Week 18", count: 0 },
-    { week: "Week 29", count: 0 },
-    { week: "Week 40", count: 0 },
-    { week: "Week 56", count: 5 },
-  ];
-
-  const barChartData = [
-    { department: "OR-1", count: 9 },
-    { department: "OR-2", count: 7 },
-  ];
-
-  const summaryStats = [
-    { title: "Total Consumption", value: 18, description: "Items consumed", icon: <BarChart2 size={20} color="#0ea5e9" />, color: "#0ea5e9" },
-    { title: "Average per Surgery", value: 4.5, description: "Items per procedure", icon: <TrendingUp size={20} color="#22c55e" />, color: "#22c55e" },
-    { title: "Total Surgeries", value: 4, description: "Procedures tracked", icon: <ClipboardList size={20} color="#a78bfa" />, color: "#a78bfa" },
-  ];
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [allData, setAllData] = useState<any[]>([]);
 
   const [tableData, setTableData] = useState<any[]>([]);
 
@@ -58,9 +41,274 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
   useEffect(() => {
     fetch('http://192.168.50.132:3001/consumptionRecords')
       .then(res => res.json())
-      .then(data => setTableData(data))
-      .catch(() => setTableData([]));
+      .then(data => {
+        setAllData(data);
+        setTableData(data);
+        setFilteredData(data);
+      })
+      .catch(() => {
+        setAllData([]);
+        setTableData([]);
+        setFilteredData([]);
+      });
   }, []);
+
+  // Filter data based on date range and department
+  const filterData = () => {
+    let filtered = allData;
+
+    // Filter by date range
+    if (dateFrom && dateTo) {
+      filtered = filtered.filter(record => {
+        const recordDate = new Date(record.date);
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        return recordDate >= fromDate && recordDate <= toDate;
+      });
+    } else if (dateFrom) {
+      filtered = filtered.filter(record => {
+        const recordDate = new Date(record.date);
+        const fromDate = new Date(dateFrom);
+        return recordDate >= fromDate;
+      });
+    } else if (dateTo) {
+      filtered = filtered.filter(record => {
+        const recordDate = new Date(record.date);
+        const toDate = new Date(dateTo);
+        return recordDate <= toDate;
+      });
+    }
+
+    // Filter by department
+    if (selectedDepartment !== "all") {
+      filtered = filtered.filter(record => record.dept === selectedDepartment);
+    }
+
+    setFilteredData(filtered);
+    setTableData(filtered);
+    setReportGenerated(true);
+  };
+
+  // Generate report function
+  const generateReport = () => {
+    if (!dateFrom && !dateTo && selectedDepartment === "all") {
+      alert("Please select at least one filter criteria (date range or department)");
+      return;
+    }
+    filterData();
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    if (!reportGenerated) {
+      alert("Please generate a report first");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      const reportContent = `
+        <html>
+          <head>
+            <title>Consumption Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .filters { margin-bottom: 20px; padding: 10px; background: #f5f5f5; }
+              .summary { margin-bottom: 20px; }
+              .summary-item { display: inline-block; margin-right: 30px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .consumed { color: red; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>CSSD Consumption Report</h1>
+              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <div class="filters">
+              <strong>Filters:</strong><br>
+              Date Range: ${dateFrom || 'All'} to ${dateTo || 'All'}<br>
+              Department: ${selectedDepartment === 'all' ? 'All Departments' : selectedDepartment}
+            </div>
+
+            <div class="summary">
+              <div class="summary-item"><strong>Total Consumption:</strong> ${calculateSummaryStats().find(s => s.title === "Total Consumption")?.value}</div>
+              <div class="summary-item"><strong>Total Surgeries:</strong> ${calculateSummaryStats().find(s => s.title === "Total Surgeries")?.value}</div>
+              <div class="summary-item"><strong>Average per Surgery:</strong> ${calculateSummaryStats().find(s => s.title === "Average per Surgery")?.value}</div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Surgery ID</th>
+                  <th>Surgery Type</th>
+                  <th>Department</th>
+                  <th>Date</th>
+                  <th>Before Count</th>
+                  <th>After Count</th>
+                  <th>Consumed</th>
+                  <th>Items Used</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredData.map(record => `
+                  <tr>
+                    <td>${record.id || ''}</td>
+                    <td>${record.type || ''}</td>
+                    <td>${record.dept || ''}</td>
+                    <td>${record.date || ''}</td>
+                    <td>${record.before || ''}</td>
+                    <td>${record.after || ''}</td>
+                    <td class="consumed">${record.used || ''}</td>
+                    <td>${record.items || ''}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+      
+      printWindow.document.write(reportContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  // Export to Excel
+  const exportToExcel = () => {
+    if (!reportGenerated) {
+      alert("Please generate a report first");
+      return;
+    }
+
+    // Helper function to format date for Excel
+    const formatDateForExcel = (dateString: string) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      // Format as DD/MM/YYYY for Excel compatibility
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    // Create CSV content with proper date formatting (date NOT quoted)
+    const headers = ['Surgery ID', 'Surgery Type', 'Department', 'Date', 'Before Count', 'After Count', 'Consumed', 'Items Used'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredData.map(record => [
+        `"${record.id || ''}"`,
+        `"${record.type || ''}"`,
+        `"${record.dept || ''}"`,
+        formatDateForExcel(record.date), // <-- No quotes here
+        record.before || '',
+        record.after || '',
+        record.used || '',
+        `"${record.items || ''}"`
+      ].join(','))
+    ].join('\n');
+
+    // Add BOM for Excel UTF-8 compatibility
+    const BOM = '\uFEFF';
+    const csvContentWithBOM = BOM + csvContent;
+
+    // Create and download file
+    const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `consumption_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Calculate summary stats from filtered data
+  const calculateSummaryStats = () => {
+    const totalConsumption = filteredData.reduce((sum, record) => sum + (record.used || 0), 0);
+    const totalSurgeries = filteredData.length;
+    const averagePerSurgery = totalSurgeries > 0 ? (totalConsumption / totalSurgeries).toFixed(1) : 0;
+
+    return [
+      { 
+        title: "Total Consumption", 
+        value: totalConsumption, 
+        description: "Items consumed", 
+        icon: <BarChart2 size={20} color="#0ea5e9" />, 
+        color: "#0ea5e9" 
+      },
+      { 
+        title: "Average per Surgery", 
+        value: averagePerSurgery, 
+        description: "Items per procedure", 
+        icon: <TrendingUp size={20} color="#22c55e" />, 
+        color: "#22c55e" 
+      },
+      { 
+        title: "Total Surgeries", 
+        value: totalSurgeries, 
+        description: "Procedures tracked", 
+        icon: <ClipboardList size={20} color="#a78bfa" />, 
+        color: "#a78bfa" 
+      },
+    ];
+  };
+
+  // Calculate weekly consumption trend from filtered data
+  const calculateWeeklyTrend = () => {
+    const weeklyData: { [key: string]: number } = {};
+    
+    filteredData.forEach(record => {
+      if (record.date) {
+        const date = new Date(record.date);
+        const weekNumber = getWeekNumber(date);
+        const weekKey = `Week ${weekNumber}`;
+        weeklyData[weekKey] = (weeklyData[weekKey] || 0) + (record.used || 0);
+      }
+    });
+
+    return Object.entries(weeklyData)
+      .map(([week, count]) => ({ week, count }))
+      .sort((a, b) => {
+        const weekA = parseInt(a.week.split(' ')[1] || '0');
+        const weekB = parseInt(b.week.split(' ')[1] || '0');
+        return weekA - weekB;
+      });
+  };
+
+  // Calculate department-wise consumption from filtered data
+  const calculateDepartmentConsumption = () => {
+    const deptData: { [key: string]: number } = {};
+    
+    filteredData.forEach(record => {
+      if (record.dept) {
+        deptData[record.dept] = (deptData[record.dept] || 0) + (record.used || 0);
+      }
+    });
+
+    return Object.entries(deptData)
+      .map(([department, count]) => ({ department, count }))
+      .sort((a, b) => b.count - a.count);
+  };
+
+  // Helper function to get week number
+  const getWeekNumber = (date: Date) => {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  };
+
+  // Get calculated data
+  const summaryStats = calculateSummaryStats();
+  const lineChartData = calculateWeeklyTrend();
+  const barChartData = calculateDepartmentConsumption();
 
   const tableColumns = [
     { key: "id", header: "Surgery ID" },
@@ -107,12 +355,12 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
                 </select>
               </div>
               <div className="filter-button-wrapper">
-                <ButtonWithGradient onClick={() => setReportGenerated(true)}>Generate Report</ButtonWithGradient>
+                <ButtonWithGradient onClick={generateReport}>Generate Report</ButtonWithGradient>
               </div>
             </div>
             <div className="export-buttons">
-              <button className="export-btn-flat" disabled={!reportGenerated}><span>PDF</span></button>
-              <button className="export-btn-flat" disabled={!reportGenerated}><span>Excel</span></button>
+              <button className="export-btn-flat" disabled={!reportGenerated} onClick={exportToPDF}><span>PDF</span></button>
+              <button className="export-btn-flat" disabled={!reportGenerated} onClick={exportToExcel}><span>Excel</span></button>
             </div>
           </div>
         </div>
@@ -219,7 +467,9 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
               // Fetch updated records
               const res = await fetch('http://192.168.50.132:3001/consumptionRecords');
               const updated = await res.json();
+              setAllData(updated);
               setTableData(updated);
+              setFilteredData(updated);
 
               setForm({ id: "", type: "", dept: "", date: "", before: "", after: "", used: "", items: "" });
               setShowAddModal(false);

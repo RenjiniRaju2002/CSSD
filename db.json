@@ -79,6 +79,26 @@
       "status": "Completed",
       "date": "2025-07-16",
       "time": "10:56 AM"
+    },
+    {
+      "id": "REQ009",
+      "department": "Cardiology",
+      "items": "iiiiii",
+      "quantity": 3,
+      "priority": "High",
+      "status": "Requested",
+      "date": "2025-07-05",
+      "time": "09:17 am"
+    },
+    {
+      "id": "REQ010",
+      "department": "Neurology",
+      "items": "eeeeeee",
+      "quantity": 33,
+      "priority": "High",
+      "status": "Completed",
+      "date": "2025-06-30",
+      "time": "11:47 AM"
     }
   ],
   "stockItems": [
@@ -98,6 +118,15 @@
       "quantity": 5,
       "location": "Storage B",
       "minLevel": 6,
+      "status": "Low Stock"
+    },
+    {
+      "id": "STK003",
+      "name": "Scissors",
+      "category": "Reusable",
+      "quantity": 8,
+      "location": "Storage B",
+      "minLevel": 10,
       "status": "Low Stock"
     }
   ],
@@ -171,6 +200,16 @@
       "endTime": "11:13",
       "status": "Completed",
       "duration": 75
+    },
+    {
+      "id": "STE008",
+      "machine": "Autoclave-3",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ010",
+      "startTime": "13:11",
+      "endTime": "13:11",
+      "status": "In Progress",
+      "duration": 75
     }
   ],
   "availableItems": [
@@ -228,6 +267,17 @@
       "sterilizationId": "STE006",
       "machine": "Autoclave-1",
       "process": "Steam Sterilization"
+    },
+    {
+      "id": "REQ010",
+      "department": "Neurology",
+      "items": "eeeeeee",
+      "quantity": 33,
+      "status": "Sterilized",
+      "readyTime": "13:11",
+      "sterilizationId": "STE008",
+      "machine": "Autoclave-3",
+      "process": "Chemical Sterilization"
     }
   ],
   "createdKits": [
@@ -274,6 +324,16 @@
       "issuedTime": "10:58",
       "issuedDate": "2025-07-04",
       "status": "Issued (Non-Sterilized)"
+    },
+    {
+      "id": "ISS003",
+      "requestId": "REQ009",
+      "department": "OR-2",
+      "items": "iiiiii",
+      "quantity": 3,
+      "issuedTime": "13:16",
+      "issuedDate": "2025-07-07",
+      "status": "Issued (Non-Sterilized)"
     }
   ],
   "consumptionRecords": [
@@ -284,6 +344,16 @@
       "date": "2025-07-05",
       "before": 7,
       "after": 4,
+      "used": 3,
+      "items": "3"
+    },
+    {
+      "id": "SURG002",
+      "type": "Knee Replacement",
+      "dept": "OR-2",
+      "date": "2025-07-07",
+      "before": 5,
+      "after": 2,
       "used": 3,
       "items": "3"
     }

@@ -27,6 +27,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
   const [loading, setLoading] = useState(true);
 
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -41,26 +43,50 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
         const requestsRes = await fetch('http://192.168.50.132:3001/cssd_requests');
         const requests = await requestsRes.json();
         const activeCount = requests.filter((r: any) => r.status === 'Requested' || r.status === 'In Progress').length;
-        
+        // Get latest new request
+        const sortedRequests = [...requests].sort((a, b) => new Date(b.date + 'T' + (b.time || '00:00')).getTime() - new Date(a.date + 'T' + (a.time || '00:00')).getTime());
+        const latestRequest = sortedRequests.find((r: any) => r.status === 'Requested');
+
         // Get sterilization in progress count
         const processesRes = await fetch('http://192.168.50.132:3001/sterilizationProcesses');
         const processes = await processesRes.json();
         const inProgressCount = processes.filter((p: any) => p.status === 'In Progress').length;
-        
+        // Get latest completed sterilization
+        const completedProcesses = processes.filter((p: any) => p.status === 'Completed');
+        const sortedCompleted = [...completedProcesses].sort((a, b) => new Date(b.endTime || b.date || '').getTime() - new Date(a.endTime || a.date || '').getTime());
+        const latestCompleted = sortedCompleted[0];
+
         // Get items ready count (completed sterilization processes)
-        const completedCount = processes.filter((p: any) => p.status === 'Completed').length;
-        
+        const completedCount = completedProcesses.length;
         // Get low stock count
         const stockRes = await fetch('http://192.168.50.132:3001/stockItems');
         const stock = await stockRes.json();
         const lowStockCount = stock.filter((item: any) => item.status === 'Low Stock').length;
-        
+
         setStats({
           activeRequests: activeCount,
           sterilizationInProgress: inProgressCount,
           itemsReady: completedCount,
           lowStockItems: lowStockCount
         });
+
+        // Prepare recent activity
+        const activity: any[] = [];
+        if (latestCompleted) {
+          activity.push({
+            type: 'sterilization',
+            id: latestCompleted.itemId || latestCompleted.id,
+            desc: latestCompleted.process ? `${latestCompleted.process} finished for ${latestCompleted.itemId || 'item'}` : 'Sterilization process completed',
+          });
+        }
+        if (latestRequest) {
+          activity.push({
+            type: 'request',
+            id: latestRequest.id,
+            desc: latestRequest.items ? `${latestRequest.items} requested from ${latestRequest.department}` : 'New request submitted',
+          });
+        }
+        setRecentActivity(activity);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         // Keep default values if there's an error
@@ -122,14 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
       <PageContainer>
         <div className="flex justify-between items-center mb-6">
         <SectionHeading title="Dashboard" subtitle="Central Sterile Service Department" className="dashboard-heading" />
-          <button 
-            onClick={refreshDashboard}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+         
         </div>
         
         <div className="dashboard-summary-cards">
@@ -151,20 +170,24 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
             </div>
             <div className="section-content">
               <div className="activity-list">
-                <div className="activity-item-card">
-                  <Activity className="icon teal"/>
-                  <div>
-                    <p className="activity-title">Sterilization Completed - REQ001</p>
-                    <p className="activity-desc">Autoclave cycle finished for surgery kit</p>
+                {recentActivity.length === 0 && (
+                  <div className="text-gray-500">No recent activity</div>
+                )}
+                {recentActivity.map((act, idx) => (
+                  <div className="activity-item-card" key={idx}>
+                    {act.type === 'sterilization' ? (
+                      <Activity className="icon teal" />
+                    ) : (
+                      <Package className="icon teal" />
+                    )}
+                    <div>
+                      <p className="activity-title">
+                        {act.type === 'sterilization' ? 'Sterilization Completed' : 'New Request'} - {act.id}
+                      </p>
+                      <p className="activity-desc">{act.desc}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="activity-item-card">
-                  <Package className="icon teal"/>
-                  <div>
-                    <p className="activity-title">New Request - REQ002</p>
-                    <p className="activity-desc">Emergency surgery kit requested from OR-3</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>

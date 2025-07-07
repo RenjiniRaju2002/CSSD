@@ -328,13 +328,13 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                   <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label>
                   <div className="flex gap-2">
                     <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
-                      <option value="">Select completed request ID</option>
-                      {availableRequests.map(req => (
+                    <option value="">Select completed request ID</option>
+                    {availableRequests.map(req => (
                         <option key={req.id} value={req.id}>
                           {req.id} - {req.department} ({req.items})
                         </option>
-                      ))}
-                    </select>
+                    ))}
+                  </select>
                     <ButtonWithGradient 
                       type="button" 
                       className="button-gradient px-3"

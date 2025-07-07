@@ -124,18 +124,18 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       alert('Please enter the Required Date');
       return;
     }
-    setPendingItems([
-      ...pendingItems,
-      {
-        department: selectedDepartment,
-        priority: selectedPriority,
-        item: itemInput,
-        quantity: itemQuantity,
-        date: format(selectedDate, 'yyyy-MM-dd'),
-      },
-    ]);
-    setItemInput("");
-    setItemQuantity("");
+      setPendingItems([
+        ...pendingItems,
+        {
+          department: selectedDepartment,
+          priority: selectedPriority,
+          item: itemInput,
+          quantity: itemQuantity,
+          date: format(selectedDate, 'yyyy-MM-dd'),
+        },
+      ]);
+      setItemInput("");
+      setItemQuantity("");
   };
 
   const handleCreateRequest = (e: React.FormEvent) => {
@@ -214,17 +214,17 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       alert('Please enter the Quantity');
       return;
     }
-    setKitItems([
-      ...kitItems,
+      setKitItems([
+        ...kitItems,
       {
         department: kitDepartment,
         priority: kitPriority,
-        item: kitItemName,
-        quantity: kitItemQuantity,
-      },
-    ]);
-    setKitItemName("");
-    setKitItemQuantity("");
+          item: kitItemName,
+          quantity: kitItemQuantity,
+        },
+      ]);
+      setKitItemName("");
+      setKitItemQuantity("");
   };
 
   const handleSaveKit = async () => {
@@ -297,7 +297,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         <div className="card" style={{ flex: '0 1 50%', minWidth: 0 }}>
           <div className="card-header">
             <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2rem' }}>
-              <Plus size={20} className="mr-2" color="#0097a7" /> Add Request
+               Add Request
             </h2>
       </div>
           <div className="card-content">
@@ -419,7 +419,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         <div className="card" style={{ flex: '0 1 50%', minWidth:0}}>
           <div className="card-header flex items-center justify-between">
             <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2re m' }}>
-              <Package size={20} className="mr-2" color="#0097a7" /> Package Kits
+               Package Kits
             </h2>
             <ButtonWithGradient 
               className="button-gradient" 

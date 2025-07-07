@@ -281,8 +281,8 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
         // Update local state
         setIssuedItems(prev => [...prev, newIssue]);
         setAvailableItems(prev => prev.filter(item => item.id !== selectedRequestId));
-        setSelectedRequestId("");
-        setSelectedOutlet("");
+    setSelectedRequestId("");
+    setSelectedOutlet("");
         
         // Remove the issued item from available items in database
         try {
@@ -344,7 +344,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     <>
       <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator/>
       <PageContainer>
-        <SectionHeading 
+      <SectionHeading 
           title="Issue Item" 
           subtitle="Issue sterilized items to departments and outlets" 
           className="Issueitem-heading w-100" 
@@ -363,33 +363,33 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
           </div>
         )}
 
-        <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
+         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
           <Cards title="Available" subtitle={availableCount} />
           <Cards title="Issued Today" subtitle={issuedTodayCount} />
           <Cards title="Total Issued" subtitle={totalIssuedCount} />
-        </div>
+         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div className="issue-card">
             <div className="issue-card-header">
               <Send className="icon"  /> Issue Items
-            </div>
+        </div>
             <div className="issue-card-content">
               <form onSubmit={handleIssueItem} className="form-grid">
                 <div className="form-group">
                   <label className="form-label" htmlFor="requestId">Request ID <span style={{color: 'red'}}>*</span></label>
                   <div className="flex gap-2">
-                    <select
-                      id="requestId"
-                      name="requestId"
+                  <select
+                    id="requestId"
+                    name="requestId"
                       className="form-input flex-1"
-                      value={selectedRequestId}
-                      onChange={(e) => setSelectedRequestId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select sterilized item to issue</option>
-                      {Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
-                        const item = availableItems.find(i => i.id === id);
+                    value={selectedRequestId}
+                    onChange={(e) => setSelectedRequestId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select sterilized item to issue</option>
+                    {Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
+                      const item = availableItems.find(i => i.id === id);
                         const request = allRequests.find(r => r.id === id);
                         
                         if (item) {
@@ -407,24 +407,15 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
                             </option>
                           );
                         } else {
-                          return (
-                            <option key={id} value={id}>
+                      return (
+                        <option key={id} value={id}>
                               {id}
-                            </option>
-                          );
+                        </option>
+                      );
                         }
-                      })}
-                    </select>
-                    <ButtonWithGradient 
-                      type="button" 
-                      className="button-gradient px-3"
-                      onClick={() => {
-                        fetchRequestIds();
-                        refreshAvailableItems();
-                      }}
-                    >
-                      Refresh
-                    </ButtonWithGradient>
+                    })}
+                  </select>
+               
                   </div>
                 </div>
                 <div className="form-group">
@@ -476,7 +467,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
           <div className="issue-card">
             <div className="issue-card-header flex items-center justify-between">
               <div className="flex items-center">
-                <CheckCircle className="icon" /> Available Items
+              <CheckCircle className="icon" /> Available Items
               </div>
             </div>
             <div className="issue-card-content">
@@ -501,21 +492,19 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
                   ))
                 )}
               </div>
-              {availableItems.length > availableRowsPerPage && (
-                <Pagination
-                  page={availablePage}
-                  totalPages={availableTotalPages}
-                  rowsPerPage={availableRowsPerPage}
-                  setPage={setAvailablePage}
-                  setRowsPerPage={setAvailableRowsPerPage}
-                />
-              )}
+              <Pagination
+                page={availablePage}
+                totalPages={availableTotalPages}
+                rowsPerPage={availableRowsPerPage}
+                setPage={setAvailablePage}
+                setRowsPerPage={setAvailableRowsPerPage}
+              />
             </div>
           </div>
         </div>
         <div className="issue-table">
           <div className="issue-table-header">
-            Issue History
+             Issue History
             <div className="search-container">
               <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
