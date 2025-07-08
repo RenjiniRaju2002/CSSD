@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import Header from "../components/Header";
 // import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,7 @@ interface RequestManagementProps {
   toggleSidebar?: () => void;
 }
 const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollapsed = false, toggleSidebar }) => {
+  const navigate = useNavigate();
   const [showCreateKit, setShowCreateKit] = useState(false);
   const [showRequestDetails, setShowRequestDetails] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -55,6 +56,88 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [createdKits, setCreatedKits] = useState<any[]>([]);
   const [selectedKit, setSelectedKit] = useState<any>(null);
   const [showKitDetails, setShowKitDetails] = useState(false);
+
+  // Check if form has unsaved data
+  const hasUnsavedData = () => {
+    return (
+      selectedDepartment !== "" ||
+      selectedPriority !== "" ||
+      selectedDate !== undefined ||
+      itemInput !== "" ||
+      itemQuantity !== "" ||
+      pendingItems.length > 0 ||
+      kitName !== "" ||
+      kitDepartment !== "" ||
+      kitPriority !== "" ||
+      kitItemName !== "" ||
+      kitItemQuantity !== "" ||
+      kitItems.length > 0
+    );
+  };
+
+  // Add beforeunload event listener
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedData()) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return "You have unsaved changes. Are you sure you want to leave?";
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [selectedDepartment, selectedPriority, selectedDate, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitItemName, kitItemQuantity, kitItems]);
+
+  // Custom hook to handle navigation warnings
+  useEffect(() => {
+    const handleNavigation = (e: PopStateEvent) => {
+      if (hasUnsavedData()) {
+        const confirmed = window.confirm("You have unsaved changes. Are you sure you want to leave this page?");
+        if (!confirmed) {
+          e.preventDefault();
+          window.history.pushState(null, '', window.location.pathname);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handleNavigation);
+    return () => window.removeEventListener('popstate', handleNavigation);
+  }, [selectedDepartment, selectedPriority, selectedDate, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitItemName, kitItemQuantity, kitItems]);
+
+  // Function to validate form fields
+  const validateFormFields = () => {
+    const missingFields = [];
+    
+    if (!selectedDepartment) missingFields.push("Outlet");
+    if (!selectedPriority) missingFields.push("Priority");
+    if (!itemInput) missingFields.push("Item/Kit");
+    if (!itemQuantity) missingFields.push("Quantity");
+    if (!selectedDate) missingFields.push("Required Date");
+    
+    if (missingFields.length > 0) {
+      alert(`Please enter the following required fields: ${missingFields.join(", ")}`);
+      return false;
+    }
+    return true;
+  };
+
+  // Function to validate kit form fields
+  const validateKitFormFields = () => {
+    const missingFields = [];
+    
+    if (!kitName) missingFields.push("Kit Name");
+    if (!kitDepartment) missingFields.push("Outlet");
+    if (!kitPriority) missingFields.push("Priority");
+    if (!kitItemName) missingFields.push("Item/Kit");
+    if (!kitItemQuantity) missingFields.push("Quantity");
+    
+    if (missingFields.length > 0) {
+      alert(`Please enter the following required fields: ${missingFields.join(", ")}`);
+      return false;
+    }
+    return true;
+  };
 
   // Fetch requests from database
   useEffect(() => {
@@ -104,43 +187,47 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
   // Handlers
   const addItemToList = () => {
-    if (!selectedDepartment) {
-      alert('Please enter the Outlet');
+    if (!validateFormFields()) {
       return;
     }
-    if (!selectedPriority) {
-      alert('Please enter the Priority');
-      return;
-    }
-    if (!itemInput) {
-      alert('Please enter the Item/Kit');
-      return;
-    }
-    if (!itemQuantity) {
-      alert('Please enter the Quantity');
-      return;
-    }
-    if (!selectedDate) {
-      alert('Please enter the Required Date');
-      return;
-    }
-      setPendingItems([
-        ...pendingItems,
-        {
-          department: selectedDepartment,
-          priority: selectedPriority,
-          item: itemInput,
-          quantity: itemQuantity,
-          date: format(selectedDate, 'yyyy-MM-dd'),
-        },
-      ]);
-      setItemInput("");
-      setItemQuantity("");
+    
+    setPendingItems([
+      ...pendingItems,
+      {
+        department: selectedDepartment,
+        priority: selectedPriority,
+        item: itemInput,
+        quantity: itemQuantity,
+        date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
+      },
+    ]);
+    setItemInput("");
+    setItemQuantity("");
   };
 
   const handleCreateRequest = (e: React.FormEvent) => {
     e.preventDefault();
     // Optionally handle form submission for new request
+  };
+
+  // Function to clear form data
+  const clearFormData = () => {
+    setSelectedDepartment("");
+    setSelectedPriority("");
+    setItemInput("");
+    setItemQuantity("");
+    setSelectedDate(undefined);
+    setPendingItems([]);
+  };
+
+  // Function to clear kit form data
+  const clearKitFormData = () => {
+    setKitName("");
+    setKitDepartment("");
+    setKitPriority("");
+    setKitItemName("");
+    setKitItemQuantity("");
+    setKitItems([]);
   };
 
   const handleSaveRequest = async () => {
@@ -174,12 +261,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     const updated = await res.json();
     setRequests(updated);
 
-      setPendingItems([]);
-      setSelectedDepartment("");
-      setSelectedPriority("");
-      setItemInput("");
-      setItemQuantity("");
-      setSelectedDate(undefined);
+    // Clear form data after successful save
+    clearFormData();
   };
 
   const handleViewRequest = (request: any) => {
@@ -198,33 +281,21 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   };
 
   const handleAddKitItem = () => {
-    if (!kitDepartment) {
-      alert('Please enter the Outlet');
+    if (!validateKitFormFields()) {
       return;
     }
-    if (!kitPriority) {
-      alert('Please enter the Priority');
-      return;
-    }
-    if (!kitItemName) {
-      alert('Please enter the Item/Kit');
-      return;
-    }
-    if (!kitItemQuantity) {
-      alert('Please enter the Quantity');
-      return;
-    }
-      setKitItems([
-        ...kitItems,
+    
+    setKitItems([
+      ...kitItems,
       {
         department: kitDepartment,
         priority: kitPriority,
-          item: kitItemName,
-          quantity: kitItemQuantity,
-        },
-      ]);
-      setKitItemName("");
-      setKitItemQuantity("");
+        item: kitItemName,
+        quantity: kitItemQuantity,
+      },
+    ]);
+    setKitItemName("");
+    setKitItemQuantity("");
   };
 
   const handleSaveKit = async () => {
@@ -255,10 +326,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     setCreatedKits(updated);
     // Reset form and close modal
     setShowCreateKit(false);
-      setKitName("");
-      setKitDepartment("");
-      setKitPriority("");
-    setKitItems([]);
+    clearKitFormData();
   };
 
   const handleViewKit = (kit: any) => {
@@ -398,7 +466,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => setPendingItems([])}
+                    onClick={clearFormData}
                   >
                     Clear All
                   </button>
@@ -668,7 +736,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         type="button"
                         className="btn btn-secondary bg-white"
                         style={{ border: '1px solid #e5e7eb', boxShadow: 'none' }}
-                        onClick={() => setKitItems([])}
+                        onClick={clearKitFormData}
                         >
                           Clear All
                       </button>

@@ -138,7 +138,7 @@
       "itemId": "REQ001",
       "startTime": "10:25",
       "endTime": "13:08",
-      "status": "In Progress",
+      "status": "Completed",
       "duration": 75
     },
     {
@@ -208,8 +208,18 @@
       "itemId": "REQ010",
       "startTime": "13:11",
       "endTime": "13:11",
-      "status": "In Progress",
+      "status": "Completed",
       "duration": 75
+    },
+    {
+      "id": "STE009",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization",
+      "itemId": "REQ007",
+      "startTime": "16:28",
+      "endTime": "17:13",
+      "status": "Completed",
+      "duration": 45
     }
   ],
   "availableItems": [
@@ -252,10 +262,10 @@
       "items": "ddd",
       "quantity": 3,
       "status": "Sterilized",
-      "readyTime": "10:45",
-      "sterilizationId": "STE005",
+      "readyTime": "17:13",
+      "sterilizationId": "STE009",
       "machine": "Autoclave-2",
-      "process": "Plasma Sterilization"
+      "process": "Steam Sterilization"
     },
     {
       "id": "REQ008",

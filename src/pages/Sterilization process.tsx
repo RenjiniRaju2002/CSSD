@@ -9,6 +9,7 @@ import ButtonWithGradient from "../components/ButtonWithGradient";
 import { Play, Pause, Square, Activity, Plus, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import "../styles/SterilizationProcess.css";
 import Cards from "../components/Cards";
+import { minutesInHour } from "date-fns/constants";
 
 interface SterilizationProcessProps {
   sidebarCollapsed?: boolean;
@@ -83,6 +84,27 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
       })
       .catch(() => setAvailableRequests([]));
   }, []);
+
+  // Auto-complete processes when duration is over
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      processes.forEach((process) => {
+        if (process.status === "In Progress" && process.startTime && process.duration) {
+          // Parse startTime (format: HH:mm)
+          const [startHour, startMinute] = process.startTime.split(":").map(Number);
+          const startDate = new Date();
+          startDate.setHours(startHour, startMinute, 0, 0);
+          // Calculate elapsed minutes
+          const elapsedMinutes = (now.getTime() - startDate.getTime()) / 60000;
+          if (elapsedMinutes >= process.duration) {
+            handleStatusChange(process.id, "Completed");
+          }
+        }
+      });
+    }, 30000); // check every 30 seconds
+    return () => clearInterval(interval);
+  }, [processes]);
 
   // Machine status update handler
   const handleMachineStatusChange = (id: string, newStatus: string) => {
