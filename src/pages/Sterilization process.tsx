@@ -9,7 +9,6 @@ import ButtonWithGradient from "../components/ButtonWithGradient";
 import { Play, Pause, Square, Activity, Plus, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import "../styles/SterilizationProcess.css";
 import Cards from "../components/Cards";
-import { minutesInHour } from "date-fns/constants";
 
 interface SterilizationProcessProps {
   sidebarCollapsed?: boolean;
@@ -74,13 +73,12 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   }, []);
 
   useEffect(() => {
-    // Fetch completed requests from database
+    // Fetch approved requests from database
     fetch('http://192.168.50.132:3001/cssd_requests')
       .then(res => res.json())
       .then(data => {
-        const completedRequests = data.filter((r: any) => r.status === "Completed");
-        console.log('Completed requests for sterilization:', completedRequests);
-        setAvailableRequests(completedRequests);
+        const approvedRequests = data.filter((r: any) => r.status === "Approved");
+        setAvailableRequests(approvedRequests);
       })
       .catch(() => setAvailableRequests([]));
   }, []);
@@ -350,7 +348,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                   <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label>
                   <div className="flex gap-2">
                     <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
-                    <option value="">Select completed request ID</option>
+                    <option value="">Select approved request ID</option>
                     {availableRequests.map(req => (
                         <option key={req.id} value={req.id}>
                           {req.id} - {req.department} ({req.items})
@@ -364,8 +362,8 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                         fetch('http://192.168.50.132:3001/cssd_requests')
                           .then(res => res.json())
                           .then(data => {
-                            const completedRequests = data.filter((r: any) => r.status === "Completed");
-                            setAvailableRequests(completedRequests);
+                            const approvedRequests = data.filter((r: any) => r.status === "Approved");
+                            setAvailableRequests(approvedRequests);
                           });
                       }}
                     >
@@ -373,7 +371,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                     </ButtonWithGradient>
                   </div>
                   {availableRequests.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-1">No completed requests available. Complete a request in Receive Items first.</p>
+                    <p className="text-sm text-gray-500 mt-1">No approved requests available. Approve a request in Receive Items first.</p>
                   )}
                 </div>
                 <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>

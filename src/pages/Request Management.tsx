@@ -6,12 +6,13 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import "../styles/requestmanagement.css";
 import PageContainer from "../components/PageContainer";
-import { Plus, Filter, Trash2, Eye, Search, Package } from "lucide-react";
+import { Plus, Filter, Trash2, Search, Package } from "lucide-react";
 import Table from "../components/Table";
 import Searchbar from "../components/Searchbar";
 import ButtonWithGradient from "../components/ButtonWithGradient";
 import SectionHeading from "../components/SectionHeading";
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
 
 
 interface Request {
@@ -20,6 +21,7 @@ interface Request {
   items: string;
   quantity: number;
   priority: string;
+  requestedBy: string;
   status: string;
   date: string;
   time: string;
@@ -37,6 +39,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [requestedBy, setRequestedBy] = useState("");
   const [itemInput, setItemInput] = useState("");
   const [itemQuantity, setItemQuantity] = useState("");
   const [pendingItems, setPendingItems] = useState<any[]>([]);
@@ -50,6 +53,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [kitName, setKitName] = useState("");
   const [kitDepartment, setKitDepartment] = useState("");
   const [kitPriority, setKitPriority] = useState("");
+  const [kitRequestedBy, setKitRequestedBy] = useState("");
   const [kitItemName, setKitItemName] = useState("");
   const [kitItemQuantity, setKitItemQuantity] = useState("");
   const [kitItems, setKitItems] = useState<any[]>([]);
@@ -63,12 +67,14 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       selectedDepartment !== "" ||
       selectedPriority !== "" ||
       selectedDate !== undefined ||
+      requestedBy !== "" ||
       itemInput !== "" ||
       itemQuantity !== "" ||
       pendingItems.length > 0 ||
       kitName !== "" ||
       kitDepartment !== "" ||
       kitPriority !== "" ||
+      kitRequestedBy !== "" ||
       kitItemName !== "" ||
       kitItemQuantity !== "" ||
       kitItems.length > 0
@@ -87,7 +93,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [selectedDepartment, selectedPriority, selectedDate, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitItemName, kitItemQuantity, kitItems]);
+  }, [selectedDepartment, selectedPriority, selectedDate, requestedBy, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitRequestedBy, kitItemName, kitItemQuantity, kitItems]);
 
   // Custom hook to handle navigation warnings
   useEffect(() => {
@@ -103,7 +109,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
     window.addEventListener('popstate', handleNavigation);
     return () => window.removeEventListener('popstate', handleNavigation);
-  }, [selectedDepartment, selectedPriority, selectedDate, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitItemName, kitItemQuantity, kitItems]);
+  }, [selectedDepartment, selectedPriority, selectedDate, requestedBy, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitRequestedBy, kitItemName, kitItemQuantity, kitItems]);
 
   // Function to validate form fields
   const validateFormFields = () => {
@@ -111,6 +117,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     
     if (!selectedDepartment) missingFields.push("Outlet");
     if (!selectedPriority) missingFields.push("Priority");
+    if (!requestedBy) missingFields.push("Requested By");
     if (!itemInput) missingFields.push("Item/Kit");
     if (!itemQuantity) missingFields.push("Quantity");
     if (!selectedDate) missingFields.push("Required Date");
@@ -129,6 +136,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     if (!kitName) missingFields.push("Kit Name");
     if (!kitDepartment) missingFields.push("Outlet");
     if (!kitPriority) missingFields.push("Priority");
+    if (!kitRequestedBy) missingFields.push("Requested By");
     if (!kitItemName) missingFields.push("Item/Kit");
     if (!kitItemQuantity) missingFields.push("Quantity");
     
@@ -179,30 +187,25 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-  const currentRequests = filteredRequests.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   // Handlers
   const addItemToList = () => {
     if (!validateFormFields()) {
       return;
     }
     
-    setPendingItems([
-      ...pendingItems,
-      {
-        department: selectedDepartment,
-        priority: selectedPriority,
-        item: itemInput,
-        quantity: itemQuantity,
+      setPendingItems([
+        ...pendingItems,
+        {
+          department: selectedDepartment,
+          priority: selectedPriority,
+          requestedBy: requestedBy,
+          item: itemInput,
+          quantity: itemQuantity,
         date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
-      },
-    ]);
-    setItemInput("");
-    setItemQuantity("");
+        },
+      ]);
+      setItemInput("");
+      setItemQuantity("");
   };
 
   const handleCreateRequest = (e: React.FormEvent) => {
@@ -214,6 +217,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const clearFormData = () => {
     setSelectedDepartment("");
     setSelectedPriority("");
+    setRequestedBy("");
     setItemInput("");
     setItemQuantity("");
     setSelectedDate(undefined);
@@ -225,6 +229,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     setKitName("");
     setKitDepartment("");
     setKitPriority("");
+    setKitRequestedBy("");
     setKitItemName("");
     setKitItemQuantity("");
     setKitItems([]);
@@ -237,6 +242,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     const totalQuantity = pendingItems.reduce((sum, item) => sum + Number(item.quantity), 0);
     const department = pendingItems[0].department;
     const priority = pendingItems[0].priority;
+    const requestedBy = pendingItems[0].requestedBy;
     const date = pendingItems[0].date;
       const newRequest = {
       id: nextId,
@@ -244,6 +250,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       items: combinedItems,
       quantity: totalQuantity,
       priority,
+      requestedBy,
         status: "Requested",
       date,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -285,17 +292,18 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       return;
     }
     
-    setKitItems([
-      ...kitItems,
+      setKitItems([
+        ...kitItems,
       {
         department: kitDepartment,
         priority: kitPriority,
-        item: kitItemName,
-        quantity: kitItemQuantity,
-      },
-    ]);
-    setKitItemName("");
-    setKitItemQuantity("");
+        requestedBy: kitRequestedBy,
+          item: kitItemName,
+          quantity: kitItemQuantity,
+        },
+      ]);
+      setKitItemName("");
+      setKitItemQuantity("");
   };
 
   const handleSaveKit = async () => {
@@ -310,6 +318,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       items: kitItems.map(item => item.item).join(", "),
       quantity: kitItems.reduce((sum, item) => sum + Number(item.quantity), 0),
       priority: kitPriority,
+      requestedBy: kitRequestedBy,
       status: "Active",
       date: format(new Date(), 'yyyy-MM-dd'),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -401,6 +410,17 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     <option value="Low">Low</option>
                   </select>
                 </div>
+                <div>
+                  <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter requester name"
+                    value={requestedBy}
+                    onChange={(e) => setRequestedBy(e.target.value)}
+                    required
+                  />
+                </div>
                 <div className="md:col-span-2">
                   <label className="form-label">Item /Kit <span style={{color: 'red'}}>*</span></label>
                   <input
@@ -456,6 +476,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   columns={[
                     { key: 'department', header: 'Department' },
                     { key: 'priority', header: 'Priority' },
+                    { key: 'requestedBy', header: 'Requested By' },
                     { key: 'item', header: 'Item' },
                     { key: 'quantity', header: 'Quantity' },
                     { key: 'date', header: 'Date' }
@@ -521,7 +542,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         onClick={() => handleViewKit(kit)}
                         className="text-blue-500 hover:text-blue-700"
                       >
-                        <Eye size={16}/>
+                        {/* <Eye size={16}/> */}
+                        <FontAwesomeIcon icon={faEye} style={{ color: '#2196f3', fontSize: 16 }} />
                       </button>
                     )
                   }
@@ -576,43 +598,20 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             columns={[
               { key: 'id', header: 'Request ID' },
               { key: 'department', header: 'Department' },
+              { key: 'requestedBy', header: 'Requested By' },
               { key: 'items', header: 'Items' },
               { key: 'quantity', header: 'Quantity' },
               { key: 'priority', header: 'Priority' },
               { key: 'status', header: 'Status' },
               { key: 'date', header: 'Date' },
               { key: 'time', header: 'Time' },
-        
             ]}
-            data={currentRequests}
+            data={filteredRequests}
           />
 
-          {currentRequests.length === 0 && (
+          {filteredRequests.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               No requests found matching your criteria.
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-4">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
             </div>
           )}
           </div>
@@ -682,6 +681,18 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         <option value="Low">Low</option>
                       </select>
                       </div>
+                      <div>
+                      <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={kitRequestedBy}
+                        onChange={(e) => setKitRequestedBy(e.target.value)}
+                        placeholder="Enter requester name" 
+                        required
+                        style={{ boxShadow: 'none' }}
+                      />
+                      </div>
                     </div>
 
                   <div className="mb-4">
@@ -713,7 +724,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     type="button"
                     className="button-gradient w-100"
                     onClick={handleAddKitItem}
-                    disabled={!kitItemName || !kitItemQuantity || !kitDepartment || !kitPriority}
+                    disabled={!kitItemName || !kitItemQuantity || !kitDepartment || !kitPriority || !kitRequestedBy}
                   >
                       Add Item
                   </ButtonWithGradient>
@@ -726,6 +737,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                       columns={[
                         { key: 'department', header: 'Department' },
                         { key: 'priority', header: 'Priority' },
+                        { key: 'requestedBy', header: 'Requested By' },
                         { key: 'item', header: 'Item' },
                         { key: 'quantity', header: 'Quantity' }
                       ]}
@@ -780,6 +792,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                 <div>
                     <h3 className="text-sm font-medium text-gray-500">Department</h3>
                     <p>{selectedRequest.department}</p>
+                  </div>
+                <div>
+                    <h3 className="text-sm font-medium text-gray-500">Requested By</h3>
+                    <p>{selectedRequest.requestedBy}</p>
                   </div>
                 <div>
                     <h3 className="text-sm font-medium text-gray-500">Items</h3>
@@ -849,6 +865,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                 <div>
                     <h3 className="text-sm font-medium text-gray-500">Department</h3>
                     <p>{selectedKit.department}</p>
+                </div>
+                <div>
+                    <h3 className="text-sm font-medium text-gray-500">Requested By</h3>
+                    <p>{selectedKit.requestedBy}</p>
                 </div>
                 <div>
                     <h3 className="text-sm font-medium text-gray-500">Items</h3>

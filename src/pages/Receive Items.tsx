@@ -11,6 +11,8 @@ import Table from "../components/Table";
 import Searchbar from "../components/Searchbar";
 import ButtonWithGradient from "../components/ButtonWithGradient";
 import SectionHeading from "../components/SectionHeading";
+import ApproveBtn from '../components/Approvebtn';
+import RejectButton from '../components/Rejectbtn';
 
 interface RequestItem {
   id: string;
@@ -81,12 +83,6 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const currentItems = filteredItems.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   const handleStatusUpdate = (itemId: string, newStatus: string) => {
     fetch(`http://192.168.50.132:3001/cssd_requests/${itemId}`, {
       method: 'PATCH',
@@ -140,7 +136,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
               </div>
             </div>
 
-            {currentItems.length > 0 ? (
+            {filteredItems.length > 0 ? (
               <Table
                 columns={[
                   { key: 'id', header: 'Request ID' },
@@ -156,20 +152,27 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                     header: 'Actions',
                     render: (item: any) => (
                       <div className="flex gap-2">
-                        <select
-                          className="form-input text-sm"
-                          value={item.status}
-                          onChange={(e) => handleStatusUpdate(item.id, e.target.value)}
-                        >
-                          <option value="Requested">Requested</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Completed">Completed</option>
-                        </select>
+                        <ApproveBtn
+                          onClick={() => {
+                            alert('Request approved!');
+                            handleStatusUpdate(item.id, 'Approved');
+                          }}
+                          className="button-gradient"
+                          size={12}
+                        />
+                        <RejectButton
+                          onClick={() => {
+                            alert('Request rejected!');
+                            handleStatusUpdate(item.id, 'Rejected');
+                          }}
+                          className="button-gradient"
+                          size={12}
+                        />
                       </div>
                     )
                   }
                 ]}
-                data={currentItems}
+                data={filteredItems}
               />
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -177,28 +180,6 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
               </div>
             )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-4">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </PageContainer>

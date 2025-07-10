@@ -4,101 +4,23 @@
       "id": "REQ001",
       "department": "Cardiology",
       "items": "scissors",
-      "quantity": 10,
+      "quantity": 4,
       "priority": "High",
-      "status": "Completed",
-      "date": "2025-07-03",
-      "time": "09:44 am"
+      "requestedBy": "Anjali",
+      "status": "Requested",
+      "date": "2025-07-02",
+      "time": "01:53 pm"
     },
     {
       "id": "REQ002",
-      "department": "Cardiology",
-      "items": "forcaps",
-      "quantity": 3,
-      "priority": "High",
-      "status": "Requested",
-      "date": "2025-07-03",
-      "time": "10:40 am"
-    },
-    {
-      "id": "REQ003",
-      "department": "Cardiology",
-      "items": "scissors",
-      "quantity": 3,
-      "priority": "High",
-      "status": "Completed",
-      "date": "2025-07-05",
-      "time": "05:11 pm"
-    },
-    {
-      "id": "REQ004",
-      "department": "Cardiology",
-      "items": "scissors",
-      "quantity": 4,
-      "priority": "High",
-      "status": "In Progress",
-      "date": "2025-07-05",
-      "time": "05:46 pm"
-    },
-    {
-      "id": "REQ005",
-      "department": "Cardiology",
-      "items": "scissors, forcaps",
-      "quantity": 6,
-      "priority": "High",
-      "status": "In Progress",
-      "date": "2025-07-05",
-      "time": "05:52 pm"
-    },
-    {
-      "id": "REQ006",
-      "department": "Cardiology",
-      "items": "scissors",
-      "quantity": 3,
-      "priority": "High",
-      "status": "Completed",
-      "date": "2025-07-05",
-      "time": "05:52 PM"
-    },
-    {
-      "id": "REQ007",
-      "department": "Cardiology",
-      "items": "ddd",
-      "quantity": 3,
-      "priority": "High",
-      "status": "Completed",
-      "date": "2025-07-12",
-      "time": "06:05 PM"
-    },
-    {
-      "id": "REQ008",
-      "department": "Cardiology",
-      "items": "eeeeee",
-      "quantity": 3,
-      "priority": "Low",
-      "status": "Completed",
-      "date": "2025-07-16",
-      "time": "10:56 AM"
-    },
-    {
-      "id": "REQ009",
-      "department": "Cardiology",
-      "items": "iiiiii",
-      "quantity": 3,
-      "priority": "High",
-      "status": "Requested",
-      "date": "2025-07-05",
-      "time": "09:17 am"
-    },
-    {
-      "id": "REQ010",
       "department": "Neurology",
-      "items": "eeeeeee",
-      "quantity": 33,
+      "items": "scissors, forcaps",
+      "quantity": 9,
       "priority": "High",
-      "status": "Completed",
-      "date": "2025-06-30",
-      "time": "11:47 AM"
+      "requestedBy": "devi",
+      "status": "Approved",
+      "date": "2025-07-10",
+      "time": "01:54 pm"
     }
   ],
   "stockItems": [
@@ -133,160 +55,25 @@
   "sterilizationProcesses": [
     {
       "id": "STE001",
-      "machine": "Autoclave-1",
-      "process": "Chemical Sterilization",
-      "itemId": "REQ001",
-      "startTime": "10:25",
-      "endTime": "13:08",
-      "status": "Completed",
-      "duration": 75
-    },
-    {
-      "id": "STE002",
-      "machine": "Autoclave-2",
-      "process": "Steam Sterilization",
-      "itemId": "REQ003",
-      "startTime": "17:12",
-      "endTime": "12:01",
-      "status": "Completed",
-      "duration": 45
-    },
-    {
-      "id": "STE003",
-      "machine": "Autoclave-2",
-      "process": "Steam Sterilization",
-      "itemId": "REQ006",
-      "startTime": "10:37",
-      "endTime": "10:37",
-      "status": "Completed",
-      "duration": 45
-    },
-    {
-      "id": "STE004",
-      "machine": "Autoclave-3",
-      "process": "Steam Sterilization",
-      "itemId": "REQ003",
-      "startTime": "10:40",
-      "endTime": "10:40",
-      "status": "Completed",
-      "duration": 45
-    },
-    {
-      "id": "STE005",
-      "machine": "Autoclave-2",
-      "process": "Plasma Sterilization",
-      "itemId": "REQ007",
-      "startTime": "10:45",
-      "endTime": "10:45",
-      "status": "Completed",
-      "duration": 60
-    },
-    {
-      "id": "STE006",
-      "machine": "Autoclave-1",
-      "process": "Steam Sterilization",
-      "itemId": "REQ008",
-      "startTime": "10:57",
-      "endTime": "10:58",
-      "status": "Completed",
-      "duration": 45
-    },
-    {
-      "id": "STE007",
       "machine": "Autoclave-2",
       "process": "Chemical Sterilization",
-      "itemId": "REQ003",
-      "startTime": "11:12",
-      "endTime": "11:13",
+      "itemId": "REQ002",
+      "startTime": "13:54",
+      "endTime": "13:59",
       "status": "Completed",
       "duration": 75
-    },
-    {
-      "id": "STE008",
-      "machine": "Autoclave-3",
-      "process": "Chemical Sterilization",
-      "itemId": "REQ010",
-      "startTime": "13:11",
-      "endTime": "13:11",
-      "status": "Completed",
-      "duration": 75
-    },
-    {
-      "id": "STE009",
-      "machine": "Autoclave-2",
-      "process": "Steam Sterilization",
-      "itemId": "REQ007",
-      "startTime": "16:28",
-      "endTime": "17:13",
-      "status": "Completed",
-      "duration": 45
     }
   ],
   "availableItems": [
     {
-      "id": "REQ001",
-      "department": "Cardiology",
-      "items": "scissors",
-      "quantity": 10,
-      "status": "Sterilized",
-      "readyTime": "13:08",
-      "sterilizationId": "STE001",
-      "machine": "Autoclave-1",
-      "process": "Chemical Sterilization"
-    },
-    {
-      "id": "REQ006",
-      "department": "Cardiology",
-      "items": "scissors",
-      "quantity": 3,
-      "status": "Sterilized",
-      "readyTime": "10:37",
-      "sterilizationId": "STE003",
-      "machine": "Autoclave-2",
-      "process": "Steam Sterilization"
-    },
-    {
-      "id": "REQ003",
-      "department": "Cardiology",
-      "items": "scissors",
-      "quantity": 3,
-      "status": "Sterilized",
-      "readyTime": "12:01",
-      "sterilizationId": "STE002",
-      "machine": "Autoclave-2",
-      "process": "Steam Sterilization"
-    },
-    {
-      "id": "REQ007",
-      "department": "Cardiology",
-      "items": "ddd",
-      "quantity": 3,
-      "status": "Sterilized",
-      "readyTime": "17:13",
-      "sterilizationId": "STE009",
-      "machine": "Autoclave-2",
-      "process": "Steam Sterilization"
-    },
-    {
-      "id": "REQ008",
-      "department": "Cardiology",
-      "items": "eeeeee",
-      "quantity": 3,
-      "status": "Sterilized",
-      "readyTime": "10:58",
-      "sterilizationId": "STE006",
-      "machine": "Autoclave-1",
-      "process": "Steam Sterilization"
-    },
-    {
-      "id": "REQ010",
+      "id": "REQ002",
       "department": "Neurology",
-      "items": "eeeeeee",
-      "quantity": 33,
+      "items": "scissors, forcaps",
+      "quantity": 9,
       "status": "Sterilized",
-      "readyTime": "13:11",
-      "sterilizationId": "STE008",
-      "machine": "Autoclave-3",
+      "readyTime": "13:59",
+      "sterilizationId": "STE001",
+      "machine": "Autoclave-2",
       "process": "Chemical Sterilization"
     }
   ],
@@ -312,37 +99,28 @@
       "status": "Active",
       "date": "2025-07-04",
       "time": "10:57 AM"
+    },
+    {
+      "id": "KIT003",
+      "name": "surgical kit",
+      "department": "Neurology",
+      "items": "rgggggfh, mbmbm",
+      "quantity": 14,
+      "priority": "Medium",
+      "status": "Active",
+      "date": "2025-07-09",
+      "time": "04:23 pm"
     }
   ],
   "issueItems": [
     {
       "id": "ISS001",
-      "requestId": "REQ002",
+      "requestId": "REQ001",
       "department": "OR-2",
-      "items": "forcaps",
-      "quantity": 3,
-      "issuedTime": "10:30",
-      "issuedDate": "2025-07-04",
-      "status": "Issued (Non-Sterilized)"
-    },
-    {
-      "id": "ISS002",
-      "requestId": "REQ005",
-      "department": "OR-1",
-      "items": "scissors, forcaps",
-      "quantity": 6,
-      "issuedTime": "10:58",
-      "issuedDate": "2025-07-04",
-      "status": "Issued (Non-Sterilized)"
-    },
-    {
-      "id": "ISS003",
-      "requestId": "REQ009",
-      "department": "OR-2",
-      "items": "iiiiii",
-      "quantity": 3,
-      "issuedTime": "13:16",
-      "issuedDate": "2025-07-07",
+      "items": "scissors",
+      "quantity": 4,
+      "issuedTime": "13:59",
+      "issuedDate": "2025-07-10",
       "status": "Issued (Non-Sterilized)"
     }
   ],
