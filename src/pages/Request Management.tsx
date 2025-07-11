@@ -13,7 +13,8 @@ import ButtonWithGradient from "../components/ButtonWithGradient";
 import SectionHeading from "../components/SectionHeading";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
-
+import Stepper from '../components/Stepper';
+import Input from "../components/Input";
 
 interface Request {
   id: string;
@@ -60,6 +61,12 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [createdKits, setCreatedKits] = useState<any[]>([]);
   const [selectedKit, setSelectedKit] = useState<any>(null);
   const [showKitDetails, setShowKitDetails] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const stepLabels = [
+    'Add Item Request',
+    'Review Request',
+    
+  ];
 
   // Check if form has unsaved data
   const hasUnsavedData = () => {
@@ -244,23 +251,49 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     const priority = pendingItems[0].priority;
     const requestedBy = pendingItems[0].requestedBy;
     const date = pendingItems[0].date;
-      const newRequest = {
+    const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    
+    const newRequest = {
       id: nextId,
       department,
       items: combinedItems,
       quantity: totalQuantity,
       priority,
       requestedBy,
-        status: "Requested",
+      status: "Requested",
       date,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      time: currentTime
     };
     
-    // POST to API
+    // POST to API for cssd_requests
     await fetch('http://192.168.50.132:3001/cssd_requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newRequest)
+    });
+
+    // Create corresponding entry in receive_items
+    const receiveItemId = `REC${(requests.length + 1).toString().padStart(3, "0")}`;
+    const newReceiveItem = {
+      id: receiveItemId,
+      requestId: nextId,
+      department,
+      items: combinedItems,
+      quantity: totalQuantity,
+      priority,
+      requestedBy,
+      status: "Pending",
+      date,
+      time: currentTime,
+      receivedDate: date,
+      receivedTime: currentTime
+    };
+
+    // POST to API for receive_items
+    await fetch('http://192.168.50.132:3001/receive_items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newReceiveItem)
     });
 
     // Fetch updated requests
@@ -270,6 +303,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
     // Clear form data after successful save
     clearFormData();
+    setCurrentStep(1); // Move to step 2 after successful save
   };
 
   const handleViewRequest = (request: any) => {
@@ -310,9 +344,12 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     if (!kitName || !kitDepartment || !kitPriority || kitItems.length === 0) return;
     // Generate a new kit ID
     const newKitId = `KIT${(createdKits.length + 1).toString().padStart(3, "0")}`;
+    const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const currentDate = format(new Date(), 'yyyy-MM-dd');
+    
     // Create new kit object
-      const newKit = {
-        id: newKitId,
+    const newKit = {
+      id: newKitId,
       name: kitName,
       department: kitDepartment,
       items: kitItems.map(item => item.item).join(", "),
@@ -320,15 +357,41 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       priority: kitPriority,
       requestedBy: kitRequestedBy,
       status: "Active",
-      date: format(new Date(), 'yyyy-MM-dd'),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      date: currentDate,
+      time: currentTime
     };
-    // POST to API
+    
+    // POST to API for createdKits
     await fetch('http://192.168.50.132:3001/createdKits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newKit)
     });
+
+    // Create corresponding entry in receive_items for kit
+    const receiveItemId = `REC${(requests.length + createdKits.length + 1).toString().padStart(3, "0")}`;
+    const newReceiveItem = {
+      id: receiveItemId,
+      requestId: newKitId,
+      department: kitDepartment,
+      items: kitItems.map(item => item.item).join(", "),
+      quantity: kitItems.reduce((sum, item) => sum + Number(item.quantity), 0),
+      priority: kitPriority,
+      requestedBy: kitRequestedBy,
+      status: "Pending",
+      date: currentDate,
+      time: currentTime,
+      receivedDate: currentDate,
+      receivedTime: currentTime
+    };
+
+    // POST to API for receive_items
+    await fetch('http://192.168.50.132:3001/receive_items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newReceiveItem)
+    });
+    
     // Fetch updated kits
     const res = await fetch('http://192.168.50.132:3001/createdKits');
     const updated = await res.json();
@@ -362,103 +425,107 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator />
     {/* <div className="request-management"> */}
     <PageContainer>
+      
       {/* <div className="page-header">
         <h1 className="page-title">Request Management</h1>
        
       </div> */}
        <SectionHeading title="Request Management" subtitle="Create and manage sterilization requests" className="requestmanagement-heading w-100" />
+       <Stepper currentStep={currentStep} steps={stepLabels} />
 
-      {/* Top section: Add Request and Package Kits */}
-      <div className="flex gap-4 mb-4" style={{ alignItems: "stretch" }}>
-        {/* Add Request Card */}
-        <div className="card" style={{ flex: '0 1 50%', minWidth: 0 }}>
-          <div className="card-header">
-            <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2rem' }}>
-               Add Request
-            </h2>
-      </div>
-          <div className="card-content">
-            <form onSubmit={handleSaveRequest}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                <div>
-                  <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label>
-                  <select 
-                    className="form-input"
-                    name="department"
-                    required
-                    value={selectedDepartment}
-                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                  >
-                    <option value="">Select department</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label>
-                  <select 
-                    className="form-input"
-                    name="priority"
-                    required
-                    value={selectedPriority}
-                    onChange={(e) => setSelectedPriority(e.target.value)}
-                  >
-                    <option value="">Select priority</option>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Enter requester name"
-                    value={requestedBy}
-                    onChange={(e) => setRequestedBy(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="form-label">Item /Kit <span style={{color: 'red'}}>*</span></label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Add item name"
-                    value={itemInput}
-                    onChange={(e) => setItemInput(e.target.value)}
-                  />
-              </div>
-              <div>
-                  <label className="form-label">Quantity <span style={{color: 'red'}}>*</span></label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    placeholder="Enter quantity"
-                    min="1"
-                    value={itemQuantity}
-                    onChange={(e) => setItemQuantity(e.target.value)}
-                  />
-              </div>
-                <div>
-                  <label className="form-label">Required Date <span style={{color: 'red'}}>*</span></label>
-                  <div className="flex items-center">
-                    <input
-                      type="date"
+      {/* Step 1: Add Request and Package Kits */}
+      {currentStep === 0 && (
+        <div className="mb-4">
+          <div className="card mb-4">
+            {/* Add Request Card content (move all content from the Add Request card here, remove flex/minWidth) */}
+            <div className="card-header">
+              <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2rem' }}>
+                Add Request
+              </h2>
+            </div>
+            <div className="card-content">
+              <form onSubmit={handleSaveRequest}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                  <div>
+                    <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label>
+                    <select 
                       className="form-input"
-                      value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
-                      onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
+                      name="department"
+                      required
+                      value={selectedDepartment}
+                      onChange={(e) => setSelectedDepartment(e.target.value)}
+                    >
+                      <option value="">Select department</option>
+                      <option value="Cardiology">Cardiology</option>
+                      <option value="Neurology">Neurology</option>
+                      <option value="Orthopedics">Orthopedics</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label>
+                    <select 
+                      className="form-input"
+                      name="priority"
+                      required
+                      value={selectedPriority}
+                      onChange={(e) => setSelectedPriority(e.target.value)}
+                    >
+                      <option value="">Select priority</option>
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Enter requester name"
+                      value={requestedBy}
+                      onChange={(e) => setRequestedBy(e.target.value)}
                       required
                     />
+                    {/* <Input label="Requested By" type="text" placeholder="Enter requester name" value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} required/> */}
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="form-label">Item /Kit <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Add item name"
+                      value={itemInput}
+                      onChange={(e) => setItemInput(e.target.value)}
+                    />
                 </div>
-              </div>
-              </div>
-             
+                <div>
+                    <label className="form-label">Quantity <span style={{color: 'red'}}>*</span></label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      placeholder="Enter quantity"
+                      min="1"
+                      value={itemQuantity}
+                      onChange={(e) => setItemQuantity(e.target.value)}
+                    />
+                </div>
+                  <div>
+                    <label className="form-label">Required Date <span style={{color: 'red'}}>*</span></label>
+                    <div className="flex items-center">
+                      <input
+                        type="date"
+                        className="form-input"
+                        value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
+                        required
+                      />
+                  </div>
+                </div>
+                </div>
+               
 
         <ButtonWithGradient
-        className='button-gradient w-100 mt-2'
+        className='button-gradient w-25 mt-2'
        
         text="Fallback text"
         onClick={addItemToList}
@@ -468,160 +535,187 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       >
         Add Request
       </ButtonWithGradient>
-            </form>
-            {pendingItems.length > 0 && (
-              <div className="mt-6">
-                <h3 className="mb-2" style={{ fontWeight: 600, fontSize: '1.2rem' }}>Requests to be Added</h3>
-                <Table
-                  columns={[
-                    { key: 'department', header: 'Department' },
-                    { key: 'priority', header: 'Priority' },
-                    { key: 'requestedBy', header: 'Requested By' },
-                    { key: 'item', header: 'Item' },
-                    { key: 'quantity', header: 'Quantity' },
-                    { key: 'date', header: 'Date' }
-                  ]}
-                  data={pendingItems}
-                />
-                <div className="flex justify-end gap-2 mt-2">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={clearFormData}
-                  >
-                    Clear All
-                  </button>
-                  <ButtonWithGradient
-                    type="button"
-                    className="button-gradient"
-                    onClick={handleSaveRequest}
-                  >
-                    Save Request
-                  </ButtonWithGradient>
+              </form>
+              {pendingItems.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="mb-2" style={{ fontWeight: 600, fontSize: '1.2rem' }}>Requests to be Added</h3>
+                  <Table
+                    columns={[
+                      { key: 'department', header: 'Department' },
+                      { key: 'priority', header: 'Priority' },
+                      { key: 'requestedBy', header: 'Requested By' },
+                      { key: 'item', header: 'Item' },
+                      { key: 'quantity', header: 'Quantity' },
+                      { key: 'date', header: 'Date' }
+                    ]}
+                    data={pendingItems}
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={clearFormData}
+                    >
+                      Clear All
+                    </button>
+                    <ButtonWithGradient
+                      type="button"
+                      className="button-gradient"
+                      onClick={handleSaveRequest}
+                    >
+                      Save Request
+                    </ButtonWithGradient>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="card mb-4">
+            {/* Package Kits Card content (move all content from the Package Kits card here, remove flex/minWidth) */}
+            <div className="card-header flex items-center justify-between">
+              <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2rem' }}>
+                Package Kits
+              </h2>
+              <ButtonWithGradient 
+                className="button-gradient" 
+                onClick={() => setShowCreateKit(true)}
+              >
+                Create Kit
+              </ButtonWithGradient>
+            </div>
+            <div className="card-content">
+              <div className="flex justify-end">
+                <div className="search ml-auto">
+                  <Searchbar value={kitSearchTerm} onChange={e => setKitSearchTerm(e.target.value)} />
                 </div>
               </div>
-            )}
+              {createdKits.length > 0 ? (
+                <Table
+                  columns={[
+                    { key: 'id', header: 'Kit ID' },
+                    { key: 'name', header: 'Kit Name' },
+                    { key: 'department', header: 'Department' },
+                    { key: 'items', header: 'Items' },
+                    { key: 'quantity', header: 'Quantity' },
+                    { key: 'priority', header: 'Priority' },
+                    { key: 'status', header: 'Status' },
+                    {
+                      key: 'actions',
+                      header: 'Actions',
+                      render: (kit: any) => (
+                        <button
+                          onClick={() => handleViewKit(kit)}
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          {/* <Eye size={16}/> */}
+                          <FontAwesomeIcon icon={faEye} style={{ color: '#2196f3', fontSize: 16 }} />
+                        </button>
+                      )
+                    }
+                  ]}
+                  data={createdKits.filter((kit: any) => 
+                    kit.name.toLowerCase().includes(kitSearchTerm.toLowerCase()) ||
+                    kit.id.toLowerCase().includes(kitSearchTerm.toLowerCase())
+                  )}
+                />
+              ) : (
+                <div className="text-center text-gray-500 mt-4">No kits found</div>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-2" style={{justifyContent:'flex-end'}}>
+            <div>
+              <ButtonWithGradient
+                type="button"
+                className="button-gradient"
+                onClick={() => setCurrentStep(1)}
+              >
+                Next
+              </ButtonWithGradient>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Package Kits Card */}
-        <div className="card" style={{ flex: '0 1 50%', minWidth:0}}>
-          <div className="card-header flex items-center justify-between">
-            <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2re m' }}>
-               Package Kits
-            </h2>
-            <ButtonWithGradient 
-              className="button-gradient" 
-              
-              onClick={() => setShowCreateKit(true)}
-            >
-                    Create Kit
-            </ButtonWithGradient>
-          </div>
-          <div className="card-content">
-            <div className="flex justify-end">
-              <div className="search ml-auto">
-                <Searchbar value={kitSearchTerm} onChange={e => setKitSearchTerm(e.target.value)} />
-              </div>
+      {/* Step 2: Review & Approve Request Approval Review */}
+      {currentStep === 1 && (
+        <>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Previous Requests</h2>
             </div>
-            {createdKits.length > 0 ? (
+            <div className="card-content">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-2">
+                  <select 
+                    className="form-input text-sm"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="requested">Requested</option>
+                    <option value="in progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <select 
+                    className="form-input text-sm"
+                    value={filterPriority}
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                  >
+                    <option value="all">All Priorities</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+                <div className="relative flex-1 max-w-md ml-auto">
+                  <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+              </div>
               <Table
                 columns={[
-                  { key: 'id', header: 'Kit ID' },
-                  { key: 'name', header: 'Kit Name' },
+                  { key: 'id', header: 'Request ID' },
                   { key: 'department', header: 'Department' },
+                  { key: 'requestedBy', header: 'Requested By' },
                   { key: 'items', header: 'Items' },
                   { key: 'quantity', header: 'Quantity' },
                   { key: 'priority', header: 'Priority' },
                   { key: 'status', header: 'Status' },
-                  {
-                    key: 'actions',
-                    header: 'Actions',
-                    render: (kit: any) => (
-                      <button
-                        onClick={() => handleViewKit(kit)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        {/* <Eye size={16}/> */}
-                        <FontAwesomeIcon icon={faEye} style={{ color: '#2196f3', fontSize: 16 }} />
-                      </button>
-                    )
-                  }
+                  { key: 'date', header: 'Date' },
+                  { key: 'time', header: 'Time' },
                 ]}
-                data={createdKits.filter((kit: any) => 
-                  kit.name.toLowerCase().includes(kitSearchTerm.toLowerCase()) ||
-                  kit.id.toLowerCase().includes(kitSearchTerm.toLowerCase())
-                )}
+                data={filteredRequests}
               />
-            ) : (
-              <div className="text-center text-gray-500 mt-4">No kits found</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Previous Requests</h2>
-        </div>
-        <div className="card-content">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex gap-2">
-                <select
-                  className="form-input text-sm"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="requested">Requested</option>
-                  <option value="in progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-                <select 
-                  className="form-input text-sm"
-                  value={filterPriority}
-                  onChange={(e) => setFilterPriority(e.target.value)}
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </div>
-              <div className="relative flex-1 max-w-md ml-auto">
-                <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </div>
+              {filteredRequests.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No requests found matching your criteria.
+                </div>
+              )}
             </div>
-
-          {/* Table component for previous requests */}
-          <Table
-            columns={[
-              { key: 'id', header: 'Request ID' },
-              { key: 'department', header: 'Department' },
-              { key: 'requestedBy', header: 'Requested By' },
-              { key: 'items', header: 'Items' },
-              { key: 'quantity', header: 'Quantity' },
-              { key: 'priority', header: 'Priority' },
-              { key: 'status', header: 'Status' },
-              { key: 'date', header: 'Date' },
-              { key: 'time', header: 'Time' },
-            ]}
-            data={filteredRequests}
-          />
-
-          {filteredRequests.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No requests found matching your criteria.
-            </div>
-          )}
           </div>
+          <div className="flex justify-content-end gap-2 mt-2">
+            <ButtonWithGradient
+              type="button"
+              className="button-gradient"
+              onClick={() => setCurrentStep(0)}
+            >
+              Back
+            </ButtonWithGradient>
+            <ButtonWithGradient
+              type="button"
+              className="button-gradient"
+              onClick={() => setCurrentStep(1)}
+            >
+              Next
+            </ButtonWithGradient>
           </div>
-          
+        </>
+      )}
 
       {/* Create Kit Dialog */}
       {showCreateKit && (
         <div className="dialog-overlay">
-          <div className="dialog-content" style={{ maxWidth: '600px', width: '90%', boxShadow: 'none' }}>
+          <div className="dialog-content" style={{ maxWidth: '600px', width: '60%', boxShadow: 'none' }}>
             <div className="card" style={{ boxShadow: 'none' }}>
               <div className="card-header flex items-center justify-between">
                 <h2 className="card-title">Create Package Kit</h2>

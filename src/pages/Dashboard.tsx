@@ -180,12 +180,12 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
                     ) : (
                       <Package className="icon teal" />
                     )}
-                    <div>
+                  <div>
                       <p className="activity-title">
                         {act.type === 'sterilization' ? 'Sterilization Completed' : 'New Request'} - {act.id}
                       </p>
                       <p className="activity-desc">{act.desc}</p>
-                    </div>
+                </div>
                   </div>
                 ))}
               </div>

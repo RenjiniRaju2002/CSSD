@@ -21,6 +21,86 @@
       "status": "Approved",
       "date": "2025-07-10",
       "time": "01:54 pm"
+    },
+    {
+      "id": "REQ003",
+      "department": "Cardiology",
+      "items": "dsff",
+      "quantity": 6,
+      "priority": "Medium",
+      "requestedBy": "fdsfsd",
+      "status": "Requested",
+      "date": "2025-07-10",
+      "time": "10:54 am"
+    },
+    {
+      "id": "REQ004",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "lini",
+      "status": "Requested",
+      "date": "2025-07-11",
+      "time": "04:54 pm"
+    }
+  ],
+  "receive_items": [
+    {
+      "id": "REC001",
+      "requestId": "REQ001",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 4,
+      "priority": "High",
+      "requestedBy": "Anjali",
+      "status": "Pending",
+      "date": "2025-07-02",
+      "time": "01:53 pm",
+      "receivedDate": "2025-07-02",
+      "receivedTime": "02:00 pm"
+    },
+    {
+      "id": "REC002",
+      "requestId": "REQ002",
+      "department": "Neurology",
+      "items": "scissors, forcaps",
+      "quantity": 9,
+      "priority": "High",
+      "requestedBy": "devi",
+      "status": "Approved",
+      "date": "2025-07-10",
+      "time": "01:54 pm",
+      "receivedDate": "2025-07-10",
+      "receivedTime": "02:00 pm"
+    },
+    {
+      "id": "REC003",
+      "requestId": "REQ003",
+      "department": "Cardiology",
+      "items": "dsff",
+      "quantity": 6,
+      "priority": "Medium",
+      "requestedBy": "fdsfsd",
+      "status": "Pending",
+      "date": "2025-07-10",
+      "time": "10:54 am",
+      "receivedDate": "2025-07-10",
+      "receivedTime": "10:54 am"
+    },
+    {
+      "id": "REC004",
+      "requestId": "REQ004",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "lini",
+      "status": "Pending",
+      "date": "2025-07-11",
+      "time": "04:54 pm",
+      "receivedDate": "2025-07-11",
+      "receivedTime": "04:54 pm"
     }
   ],
   "stockItems": [
@@ -62,6 +142,76 @@
       "endTime": "13:59",
       "status": "Completed",
       "duration": 75
+    },
+    {
+      "id": "STE002",
+      "machine": "Autoclave-1",
+      "process": "Steam Sterilization",
+      "itemId": "REQ002",
+      "startTime": "14:27",
+      "endTime": "15:19",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE003",
+      "machine": "Autoclave-1",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ002",
+      "startTime": "14:29",
+      "endTime": "15:44",
+      "status": "Completed",
+      "duration": 75
+    },
+    {
+      "id": "STE004",
+      "machine": "Autoclave-3",
+      "process": "Steam Sterilization",
+      "itemId": "REQ002",
+      "startTime": "14:32",
+      "endTime": "14:32",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE005",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization",
+      "itemId": "REQ002",
+      "startTime": "14:52",
+      "endTime": "15:37",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE006",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ002",
+      "startTime": "14:55",
+      "endTime": "16:22",
+      "status": "Completed",
+      "duration": 75
+    },
+    {
+      "id": "STE007",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ002",
+      "startTime": "15:04",
+      "endTime": "16:22",
+      "status": "Completed",
+      "duration": 75
+    },
+    {
+      "id": "STE008",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization",
+      "itemId": "REQ002",
+      "startTime": "15:21",
+      "endTime": "16:22",
+      "status": "Completed",
+      "duration": 45
     }
   ],
   "availableItems": [
@@ -71,8 +221,8 @@
       "items": "scissors, forcaps",
       "quantity": 9,
       "status": "Sterilized",
-      "readyTime": "13:59",
-      "sterilizationId": "STE001",
+      "readyTime": "16:22",
+      "sterilizationId": "STE006",
       "machine": "Autoclave-2",
       "process": "Chemical Sterilization"
     }

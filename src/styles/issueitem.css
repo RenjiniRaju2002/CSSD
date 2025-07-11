@@ -132,9 +132,7 @@
   font-size: 0.75rem;
   border-radius: 9999px;
   font-weight: 500;
-  
-  
-  
+  align-content: center;
 }
 
 .status-sterilized {

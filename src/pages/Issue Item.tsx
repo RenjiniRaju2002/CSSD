@@ -11,6 +11,7 @@ import PageContainer from "../components/PageContainer";
 import Cards from "../components/Cards";
 import SectionHeading from "../components/SectionHeading";
 import Pagination from "../components/Pagination";
+import Stepper from "../components/Stepper";
 
 interface AvailableItem {
   id: string;
@@ -41,6 +42,11 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   const [error, setError] = useState("");
   const [availablePage, setAvailablePage] = useState(1);
   const [availableRowsPerPage, setAvailableRowsPerPage] = useState(5);
+  const [currentStep, setCurrentStep] = useState(0);
+  const stepLabels = [
+    "Issue Items",
+    "Issue History"
+  ];
 
   // Fetch issued items from backend
   const fetchIssuedItems = async () => {
@@ -296,6 +302,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
         // Refresh data
         fetchIssuedItems();
         fetchRequestIds();
+        setCurrentStep(1); // Go to Issue History after issuing
       } else {
         setError('Failed to save issued item');
       }
@@ -344,175 +351,157 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     <>
       <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator/>
       <PageContainer>
-      <SectionHeading 
-          title="Issue Item" 
-          subtitle="Issue sterilized items to departments and outlets" 
-          className="Issueitem-heading w-100" 
+        <SectionHeading
+          title={currentStep === 0 ? "Issue Item" : "Issue History"}
+          subtitle={currentStep === 0 ? "Issue sterilized items to departments and outlets" : "View all issued items"}
+          className="Issueitem-heading w-100"
         />
-        
+        <Stepper currentStep={currentStep} steps={stepLabels} />
         {error && (
-          <div className="error-message" style={{ 
-            backgroundColor: '#fee', 
-            color: '#c33', 
-            padding: '10px', 
-            borderRadius: '4px', 
+          <div className="error-message" style={{
+            backgroundColor: '#fee',
+            color: '#c33',
+            padding: '10px',
+            borderRadius: '4px',
             marginBottom: '20px',
             border: '1px solid #fcc'
           }}>
             {error}
           </div>
         )}
-
-         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
-          <Cards title="Available" subtitle={availableCount} />
-          <Cards title="Issued Today" subtitle={issuedTodayCount} />
-          <Cards title="Total Issued" subtitle={totalIssuedCount} />
-         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <div className="issue-card">
-            <div className="issue-card-header">
-              <Send className="icon"  /> Issue Items
-        </div>
-            <div className="issue-card-content">
-              <form onSubmit={handleIssueItem} className="form-grid">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="requestId">Request ID <span style={{color: 'red'}}>*</span></label>
-                  <div className="flex gap-2">
-                  <select
-                    id="requestId"
-                    name="requestId"
-                      className="form-input flex-1"
-                    value={selectedRequestId}
-                    onChange={(e) => setSelectedRequestId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select sterilized item to issue</option>
-                    {Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
-                      const item = availableItems.find(i => i.id === id);
-                        const request = allRequests.find(r => r.id === id);
-                        
-                        if (item) {
-                          // This is an available item (completed sterilization)
-                          return (
-                            <option key={id} value={id}>
-                              {id} - {item.items} ({item.quantity}) [Sterilized]
-                            </option>
-                          );
-                        } else if (request) {
-                          // This is a request ID (Requested or In Progress)
-                          return (
-                            <option key={id} value={id}>
-                              {id} - {request.items} ({request.quantity}) [{request.status}]
-                            </option>
-                          );
-                        } else {
-                      return (
-                        <option key={id} value={id}>
-                              {id}
-                        </option>
-                      );
-                        }
-                    })}
-                  </select>
-               
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="outlet">Department/Outlet <span style={{color: 'red'}}>*</span></label>
-                  <select
-                    id="outlet"
-                    name="outlet"
-                    className="form-input"
-                    value={selectedOutlet}
-                    onChange={(e) => setSelectedOutlet(e.target.value)}
-                    required
-                  >
-                    <option value="">Select destination</option>
-                    <option value="OR-1">Operating Room 1</option>
-                    <option value="OR-2">Operating Room 2</option>
-                    <option value="ICU">ICU</option>
-                  </select>
-                </div>
-                <div className="form-row">
-                  <div>
-                    <label className="form-label">Issue Time</label>
-                    <input
-                      className="form-input"
-                      type="text"
-                      value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label">Issue Date</label>
-                    <input
-                      className="form-input"
-                      type="text"
-                      value={new Date().toISOString().split("T")[0]}
-                      readOnly
-                    />
-                  </div>
-                </div>
-                <ButtonWithGradient 
-                  type="submit" 
-                  className="button-gradient w-full" 
-                  disabled={!selectedRequestId || !selectedOutlet || loading}
-                >
-                  {loading ? "Issuing..." : "Issue Item"}
-                </ButtonWithGradient>
-              </form>
+        {currentStep === 0 && (
+          <>
+            <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
+              <Cards title="Available" subtitle={availableCount} />
+              <Cards title="Issued Today" subtitle={issuedTodayCount} />
+              <Cards title="Total Issued" subtitle={totalIssuedCount} />
             </div>
-          </div>
-          <div className="issue-card">
-            <div className="issue-card-header flex items-center justify-between">
-              <div className="flex items-center">
-              <CheckCircle className="icon" /> Available Items
-              </div>
-            </div>
-            <div className="issue-card-content">
-              <div className="available-items">
-                {availableItems.length === 0 ? (
-                  <div>No sterilized items available</div>
-                ) : (
-                  paginatedAvailableItems.map((item) => (
-                    <div className="available-item" key={item.id}>
-                      <div>
-                        <div className="item-id">{item.id}</div>
-                        <div className="item-name">{item.items}</div>
-                        <div className="item-details">
-                          Qty: {item.quantity} | Ready: {item.readyTime}
-                        </div>
-                        <div className="item-sterilized">
-                          Sterilized: {item.machine} - {item.process}
-                        </div>
+            {/* Make the issue card full width */}
+            <div style={{ width: '100%' }}>
+              <div className="issue-card" style={{ width: '100%' }}>
+                <div className="issue-card-header">
+                  Issue Items
+                </div>
+                <div className="issue-card-content">
+                  <form onSubmit={handleIssueItem} className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="requestId">Request ID <span style={{color: 'red'}}>*</span></label>
+                      <div className="flex gap-2">
+                        <select
+                          id="requestId"
+                          name="requestId"
+                          className="form-input flex-1"
+                          value={selectedRequestId}
+                          onChange={(e) => setSelectedRequestId(e.target.value)}
+                          required
+                        >
+                          <option value="">Select sterilized item to issue</option>
+                          {Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
+                            const item = availableItems.find(i => i.id === id);
+                            const request = allRequests.find(r => r.id === id);
+                            if (item) {
+                              return (
+                                <option key={id} value={id}>
+                                  {id} - {item.items} ({item.quantity}) [Sterilized]
+                                </option>
+                              );
+                            } else if (request) {
+                              return (
+                                <option key={id} value={id}>
+                                  {id} - {request.items} ({request.quantity}) [{request.status}]
+                                </option>
+                              );
+                            } else {
+                              return (
+                                <option key={id} value={id}>
+                                  {id}
+                                </option>
+                              );
+                            }
+                          })}
+                        </select>
                       </div>
-                      <span className="status-badge status-sterilized">Sterilized</span>
                     </div>
-                  ))
-                )}
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="outlet">Department/Outlet <span style={{color: 'red'}}>*</span></label>
+                      <select
+                        id="outlet"
+                        name="outlet"
+                        className="form-input"
+                        value={selectedOutlet}
+                        onChange={(e) => setSelectedOutlet(e.target.value)}
+                        required
+                      >
+                        <option value="">Select destination</option>
+                        <option value="OR-1">Operating Room 1</option>
+                        <option value="OR-2">Operating Room 2</option>
+                        <option value="ICU">ICU</option>
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <div>
+                        <label className="form-label">Issue Time</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
+                          readOnly
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label">Issue Date</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={new Date().toISOString().split("T")[0]}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+                    <ButtonWithGradient
+                      type="submit"
+                      className="button-gradient w-full"
+                      disabled={!selectedRequestId || !selectedOutlet || loading}
+                    >
+                      {loading ? "Issuing..." : "Issue Item"}
+                    </ButtonWithGradient>
+                  </form>
+                </div>
               </div>
-              <Pagination
-                page={availablePage}
-                totalPages={availableTotalPages}
-                rowsPerPage={availableRowsPerPage}
-                setPage={setAvailablePage}
-                setRowsPerPage={setAvailableRowsPerPage}
-              />
             </div>
-          </div>
-        </div>
-        <div className="issue-table">
-          <div className="issue-table-header">
-             Issue History
-            <div className="search-container">
-              <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <div className="flex justify-content-end gap-2 mt-4">
+              <ButtonWithGradient type="button" className="button-gradient" disabled>
+                Back
+              </ButtonWithGradient>
+              <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(1)}>
+                Next
+              </ButtonWithGradient>
             </div>
-          </div>
-          <div className="issue-table-content">
-            <Table columns={columns} data={filteredIssuedItems} />
-          </div>
-        </div>
+          </>
+        )}
+        {currentStep === 1 && (
+          <>
+            <div className="issue-table">
+              <div className="issue-table-header">
+                Issue History
+                <div className="search-container">
+                  <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+              </div>
+              <div className="issue-table-content">
+                <Table columns={columns} data={filteredIssuedItems} />
+              </div>
+            </div>
+            <div className="flex justify-content-end gap-2 mt-4">
+              <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(0)}>
+                Back
+              </ButtonWithGradient>
+              <ButtonWithGradient type="button" className="button-gradient" disabled>
+                Next
+              </ButtonWithGradient>
+            </div>
+          </>
+        )}
       </PageContainer>
       <Footer />
     </>

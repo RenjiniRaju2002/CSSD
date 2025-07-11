@@ -9,6 +9,9 @@ import ButtonWithGradient from "../components/ButtonWithGradient";
 import { Play, Pause, Square, Activity, Plus, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import "../styles/SterilizationProcess.css";
 import Cards from "../components/Cards";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
+import Stepper from '../components/Stepper';
 
 interface SterilizationProcessProps {
   sidebarCollapsed?: boolean;
@@ -63,6 +66,15 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   const [availableRequests, setAvailableRequests] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showMachineStatusModal, setShowMachineStatusModal] = useState(false);
+  const [eyeHover, setEyeHover] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [lastStartedProcessId, setLastStartedProcessId] = useState<string | null>(null);
+  const stepLabels = [
+    'Start Sterilization',
+    'Active Processes',
+    'Available Items'
+  ];
 
   // Fetch sterilization processes from database
   useEffect(() => {
@@ -312,102 +324,188 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
           subtitle="Manage sterilization cycles and monitor progress" 
           className="sterilization-heading w-100" 
         />
+        <Stepper currentStep={currentStep} steps={stepLabels} />
         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6 mt-3">
           <Cards title="In Progress" subtitle={inProgressCount} />
           <Cards title="Completed Today" subtitle={completedTodayCount} />
-          <Cards title="Alerts" subtitle={alertCount} />
+          <Cards title="In Maintenance" subtitle={alertCount} />
         </div>
-        {/* Top grid: Start New Sterilization & Machine Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Start New Sterilization */}
-          <div className="card">
-            <div className="card-header">
+        {/* Step 1: Start Sterilization */}
+        {currentStep === 0 && (
+          <div className="card mb-4">
+            <div className="card-header flex items-center justify-between" style={{ position: 'relative' }}>
               <h2 className="card-title">Start New Sterilization</h2>
-            </div>
-            <div className="card-content">
-              <form onSubmit={startSterilization}>
-                <div className="mb-4">
-                  <label className="form-label">Select Machine <span style={{color: 'red'}}>*</span></label>
-                  <select className="form-input" value={selectedMachine} onChange={e => setSelectedMachine(e.target.value)} required>
-                    <option value="">Choose sterilization machine</option>
-                    {machines.map(m => (
-                      <option key={m.id} value={m.name}>{m.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="form-label">Sterilization Method <span style={{color: 'red'}}>*</span></label>
-                  <select className="form-input" value={selectedProcess} onChange={e => setSelectedProcess(e.target.value)} required>
-                    <option value="">Choose sterilization method</option>
-                    {sterilizationMethods.map(method => (
-                      <option key={method.id} value={method.name}>{method.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label>
-                  <div className="flex gap-2">
-                    <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
-                    <option value="">Select approved request ID</option>
-                    {availableRequests.map(req => (
-                        <option key={req.id} value={req.id}>
-                          {req.id} - {req.department} ({req.items})
-                        </option>
-                    ))}
-                  </select>
-                    <ButtonWithGradient 
-                      type="button" 
-                      className="button-gradient px-3"
-                      onClick={() => {
-                        fetch('http://192.168.50.132:3001/cssd_requests')
-                          .then(res => res.json())
-                          .then(data => {
-                            const approvedRequests = data.filter((r: any) => r.status === "Approved");
-                            setAvailableRequests(approvedRequests);
-                          });
-                      }}
-                    >
-                      Refresh
-                    </ButtonWithGradient>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <FontAwesomeIcon
+                  icon={faEye}
+                  style={{ color: '#2196f3', fontSize: 16, cursor: 'pointer' }}
+                  onClick={() => setShowMachineStatusModal(true)}
+                  onMouseEnter={() => setEyeHover(true)}
+                  onMouseLeave={() => setEyeHover(false)}
+                />
+                {eyeHover && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '120%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#222',
+                    color: '#fff',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '0.85rem',
+                    whiteSpace: 'nowrap',
+                    zIndex: 10,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                  }}>
+                    Machine Status
                   </div>
-                  {availableRequests.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-1">No approved requests available. Approve a request in Receive Items first.</p>
-                  )}
-                </div>
-                <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
-                  Start Sterilization Process
-                </ButtonWithGradient>
-              </form>
-            </div>
-          </div>
-          {/* Machine Status */}
-          <div className="card">
-            <div className="card-header flex items-center text-red-600">
-              <AlertCircle className="mr-2" /> Machine Status
+                )}
+              </div>
             </div>
             <div className="card-content">
-              {machines.map(m => (
-                <div key={m.id} className="flex justify-between items-center mb-3">
-                  <span>{m.name}</span>
-                  <select className="form-input w-32" value={m.status} onChange={e => handleMachineStatusChange(m.id, e.target.value)}>
-                    <option value="Available">Available</option>
-                    <option value="In Use">In Use</option>
-                    <option value="Maintenance">Maintenance</option>
-                  </select>
-                </div>
-              ))}
+              <form onSubmit={async (event) => {
+                await startSterilization(event);
+                if (selectedMachine && selectedProcess && selectedRequestId) {
+                  setTimeout(() => {
+                    const latest = processes[processes.length];
+                    setLastStartedProcessId(latest?.id || null);
+                    setCurrentStep(1);
+                  }, 300);
+                }
+              }}>
+                <div className="mb-4">
+                    <label className="form-label">Select Machine <span style={{color: 'red'}}>*</span></label>
+                    <select className="form-input" value={selectedMachine} onChange={e => setSelectedMachine(e.target.value)} required>
+                      <option value="">Choose sterilization machine</option>
+                      {machines.map(m => (
+                        <option key={m.id} value={m.name}>{m.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="form-label">Sterilization Method <span style={{color: 'red'}}>*</span></label>
+                    <select className="form-input" value={selectedProcess} onChange={e => setSelectedProcess(e.target.value)} required>
+                      <option value="">Choose sterilization method</option>
+                      {sterilizationMethods.map(method => (
+                        <option key={method.id} value={method.name}>{method.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label>
+                    <div className="flex gap-2">
+                      <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
+                      <option value="">Select approved request ID</option>
+                      {availableRequests.map(req => (
+                          <option key={req.id} value={req.id}>
+                            {req.id} - {req.department} ({req.items})
+                          </option>
+                      ))}
+                    </select>
+                   
+                    </div>
+                    {availableRequests.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-1">No approved requests available. Approve a request in Receive Items first.</p>
+                    )}
+                  </div>
+                  <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
+                    Start Sterilization Process
+                  </ButtonWithGradient>
+                </form>
+              </div>
+            <div className="flex justify-content-end gap-2 mt-2">
+              <ButtonWithGradient type="button" className="button-gradient" disabled>
+                Back
+              </ButtonWithGradient>
+              <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(1)}>
+                Next
+              </ButtonWithGradient>
             </div>
           </div>
-        </div>
-        {/* Active Processes Table */}
-        <div className="card mb-6 mt-2">
-          <div className="card-header">
-            <h2 className="card-title">Active Processes</h2>
+        )}
+          {/* Step 2: Active Processes */}
+          {currentStep === 1 && (
+            <>
+              <div className="card mb-4">
+                <div className="card-header">
+                  <h2 className="card-title">Active Processes</h2>
+                </div>
+                <div className="card-content">
+                  <Table columns={columns} data={processes} />
+                </div>
+                <div className="flex justify-end gap-2 mt-2"  style={{justifyContent:'flex-end'}}>
+                  <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(0)}>
+                    Back
+                  </ButtonWithGradient>
+                  <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(2)}>
+                    Next
+                  </ButtonWithGradient>
+                </div>
+              </div>
+            </>
+          )}
+          {/* Step 3: Available Items */}
+          {currentStep === 2 && (
+            <>
+              <div className="card mb-4">
+                <div className="card-header">
+                  <h2 className="card-title">Available Items</h2>
+                </div>
+                <div className="card-content">
+                  {/* Show all completed sterilization processes as available items */}
+                  <Table
+                    columns={[
+                      { key: 'id', header: 'Process ID' },
+                      { key: 'machine', header: 'Machine' },
+                      { key: 'process', header: 'Method' },
+                      { key: 'itemId', header: 'Item ID' },
+                      { key: 'endTime', header: 'End Time' },
+                      {
+                        key: 'status',
+                        header: 'Status',
+                        render: () => <span className="status-badge status-sterilized text-center justify-content-center">Sterilized</span>
+                      },
+                    ]}
+                    data={processes.filter(p => p.status === 'Completed')}
+                  />
+                </div>
+                <div className="flex justify-content-end gap-2 mt-2">
+                    <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(1)}>
+                      Back
+                    </ButtonWithGradient>
+                    <ButtonWithGradient type="button" className="button-gradient" disabled>
+                      Next
+                    </ButtonWithGradient>
+                </div>
+              </div>
+            </>
+          )}
+        {/* Machine Status Modal */}
+        {showMachineStatusModal && (
+          <div className="dialog-overlay">
+            <div className="dialog-content" style={{ maxWidth: '500px', width: '90%' }}>
+              <div className="card">
+                <div className="card-header flex items-center justify-between">
+                  <span className="text-red-600 flex items-center"><AlertCircle className="mr-2" /> Machine Status</span>
+                  <button className="text-gray-500 hover:text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center" onClick={() => setShowMachineStatusModal(false)} style={{ border: '1px solid #e5e7eb', boxShadow: 'none' }}>×</button>
+                </div>
+                <div className="card-content">
+                  {machines.map(m => (
+                    <div key={m.id} className="flex justify-between items-center mb-3">
+                      <span>{m.name}</span>
+                      <select className="form-input w-32" value={m.status} onChange={e => handleMachineStatusChange(m.id, e.target.value)}>
+                        <option value="Available">Available</option>
+                        <option value="In Use">In Use</option>
+                        <option value="Maintenance">Maintenance</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="card-content">
-            <Table columns={columns} data={processes} />
-          </div>
-        </div>
+        )}
       </PageContainer>
       <Footer />
     </>

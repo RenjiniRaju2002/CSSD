@@ -16,13 +16,17 @@ import RejectButton from '../components/Rejectbtn';
 
 interface RequestItem {
   id: string;
+  requestId?: string;
   department: string;
   items: string;
   quantity: number;
   priority: string;
+  requestedBy?: string;
   status: string;
   date: string;
   time: string;
+  receivedDate?: string;
+  receivedTime?: string;
 }
 
 interface ReceiveItemsProps {
@@ -58,7 +62,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetch('http://192.168.50.132:3001/cssd_requests')
+    fetch('http://192.168.50.132:3001/receive_items')
       .then(res => res.json())
       .then(data => setRequestedItems(data))
       .catch(() => setRequestedItems([]));
@@ -68,9 +72,10 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const sortedItems = [...requestedItems].sort((a, b) => a.id.localeCompare(b.id));
   const filteredItems = sortedItems.filter((item) => {
     const matchesSearch =
-      item.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.requestId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.items?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.items?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.requestedBy?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all" ||
@@ -83,18 +88,32 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const handleStatusUpdate = (itemId: string, newStatus: string) => {
-    fetch(`http://192.168.50.132:3001/cssd_requests/${itemId}`, {
+  const handleStatusUpdate = async (itemId: string, newStatus: string) => {
+    try {
+      // Update the receive_items table
+      await fetch(`http://192.168.50.132:3001/receive_items/${itemId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
-    })
-      .then(res => res.json())
-      .then(() => {
-        fetch('http://192.168.50.132:3001/cssd_requests')
-          .then(res => res.json())
-          .then(data => setRequestedItems(data));
       });
+
+      // Also update the corresponding cssd_requests table
+      const item = requestedItems.find(req => req.id === itemId);
+      if (item && item.requestId) {
+        await fetch(`http://192.168.50.132:3001/cssd_requests/${item.requestId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        });
+      }
+
+      // Refresh the data
+      const res = await fetch('http://192.168.50.132:3001/receive_items');
+      const updated = await res.json();
+      setRequestedItems(updated);
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
   };
 
   return (
@@ -116,9 +135,9 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="all">All Status</option>
-                  <option value="requested">Requested</option>
-                  <option value="in progress">In Progress</option>
-                  <option value="completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
                 </select>
                 <select
                   className="form-input text-sm"
@@ -139,14 +158,15 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
             {filteredItems.length > 0 ? (
               <Table
                 columns={[
-                  { key: 'id', header: 'Request ID' },
+                  { key: 'requestId', header: 'Request ID' },
                   { key: 'department', header: 'Department' },
+                  { key: 'requestedBy', header: 'Requested By' },
                   { key: 'items', header: 'Items' },
                   { key: 'quantity', header: 'Quantity' },
                   { key: 'priority', header: 'Priority' },
                   { key: 'status', header: 'Status' },
-                  { key: 'date', header: 'Date' },
-                  { key: 'time', header: 'Time' },
+                  { key: 'receivedDate', header: 'Received Date' },
+                  { key: 'receivedTime', header: 'Received Time' },
                   {
                     key: 'actions',
                     header: 'Actions',

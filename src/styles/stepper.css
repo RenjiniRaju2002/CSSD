@@ -1,0 +1,75 @@
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 24px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  gap: 0;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 160px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.stepper-step.active {
+  opacity: 1;
+}
+
+.stepper-step.completed {
+  opacity: 0.8;
+}
+
+.stepper-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0097a7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-right: 10px;
+  border: 2px solid #0097a7;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.stepper-step.completed .stepper-circle {
+  background: #0097a7;
+  border-color: #0097a7;
+}
+
+.stepper-step.active .stepper-circle {
+  background: #80def7;
+  border-color: #80def7;
+}
+
+.stepper-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #222;
+  white-space: nowrap;
+}
+
+.stepper-arrow {
+  width: 36px;
+  height: 2px;
+  background: #bdbdbd;
+  margin: 0 12px;
+  border-radius: 1px;
+  position: relative;
+}
+
+.stepper-step:last-child .stepper-arrow {
+  display: none;
+} 
