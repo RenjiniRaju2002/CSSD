@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/form.css';
+// import '../styles/form.css';
 
 interface DateInputProps {
   label: string;
@@ -10,9 +10,9 @@ interface DateInputProps {
 
 const DateInput: React.FC<DateInputProps> = ({ label, value, onChange, width }) => (
   <div className="dateinput-container">
-    <label className="dateinput-label">{label}</label>
+    <label className="form-label">{label}</label>
     <input
-      className="dateinput-box"
+      className="form-control"
       type="date"
       value={value}
       onChange={onChange}

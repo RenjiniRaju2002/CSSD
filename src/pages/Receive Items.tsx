@@ -62,7 +62,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const itemsPerPage = 10;
 
   useEffect(() => {
-    fetch('http://192.168.50.132:3001/receive_items')
+    fetch('http://192.168.50.95:3001/receive_items')
       .then(res => res.json())
       .then(data => setRequestedItems(data))
       .catch(() => setRequestedItems([]));
@@ -91,7 +91,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const handleStatusUpdate = async (itemId: string, newStatus: string) => {
     try {
       // Update the receive_items table
-      await fetch(`http://192.168.50.132:3001/receive_items/${itemId}`, {
+      await fetch(`http://192.168.50.95:3001/receive_items/${itemId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
@@ -100,7 +100,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
       // Also update the corresponding cssd_requests table
       const item = requestedItems.find(req => req.id === itemId);
       if (item && item.requestId) {
-        await fetch(`http://192.168.50.132:3001/cssd_requests/${item.requestId}`, {
+        await fetch(`http://192.168.50.95:3001/cssd_requests/${item.requestId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: newStatus }),
@@ -108,7 +108,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
       }
 
       // Refresh the data
-      const res = await fetch('http://192.168.50.132:3001/receive_items');
+      const res = await fetch('http://192.168.50.95:3001/receive_items');
       const updated = await res.json();
       setRequestedItems(updated);
     } catch (error) {

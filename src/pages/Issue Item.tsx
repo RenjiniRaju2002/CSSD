@@ -4,7 +4,9 @@ import { Search, Send, Clock, CheckCircle } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ButtonWithGradient from "../components/ButtonWithGradient";
-import Inputtype from "../components/Inputtype";
+// import Inputtype from "../components/Inputtype";
+import DropInput from "../components/DropInput";
+import Input from "../components/Input";
 import Searchbar from "../components/Searchbar";
 import Table from "../components/Table";
 import PageContainer from "../components/PageContainer";
@@ -51,7 +53,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   // Fetch issued items from backend
   const fetchIssuedItems = async () => {
     try {
-      const response = await fetch('http://192.168.50.132:3001/issueItems');
+      const response = await fetch('http://192.168.50.95:3001/issueItems');
       if (response.ok) {
         const data = await response.json();
         setIssuedItems(data);
@@ -68,7 +70,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   // Fetch request IDs from backend
   const fetchRequestIds = async () => {
     try {
-      const response = await fetch('http://192.168.50.132:3001/cssd_requests');
+      const response = await fetch('http://192.168.50.95:3001/cssd_requests');
       if (response.ok) {
         const requests = await response.json();
         setAllRequests(requests);
@@ -90,12 +92,12 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   const saveAvailableItems = async (items: AvailableItem[]) => {
     try {
       // Clear existing available items
-      const existingItems = await fetch('http://192.168.50.132:3001/availableItems');
+      const existingItems = await fetch('http://192.168.50.95:3001/availableItems');
       const existingData = await existingItems.json();
       
       // Delete all existing items
       for (const item of existingData) {
-        await fetch(`http://192.168.50.132:3001/availableItems/${item.id}`, {
+        await fetch(`http://192.168.50.95:3001/availableItems/${item.id}`, {
           method: 'DELETE'
         });
       }
@@ -107,7 +109,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
       
       // Add new items
       for (const item of uniqueItems) {
-        await fetch('http://192.168.50.132:3001/availableItems', {
+        await fetch('http://192.168.50.95:3001/availableItems', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -126,7 +128,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   // Fetch available items from database
   const fetchAvailableItemsFromDB = async () => {
     try {
-      const response = await fetch('http://192.168.50.132:3001/availableItems');
+      const response = await fetch('http://192.168.50.95:3001/availableItems');
       if (response.ok) {
         const data = await response.json();
         setAvailableItems(data);
@@ -145,17 +147,17 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
       setError("");
       
       // Get current available items from database
-      const currentItemsResponse = await fetch('http://192.168.50.132:3001/availableItems');
+      const currentItemsResponse = await fetch('http://192.168.50.95:3001/availableItems');
       const currentItems = await currentItemsResponse.json();
       const currentItemIds = currentItems.map((item: any) => item.id);
       
       // Fetch completed sterilization processes
-      const sterilizationResponse = await fetch('http://192.168.50.132:3001/sterilizationProcesses');
+      const sterilizationResponse = await fetch('http://192.168.50.95:3001/sterilizationProcesses');
       const sterilizationData = await sterilizationResponse.json();
       const completedProcesses = sterilizationData.filter((p: any) => p.status === "Completed");
       
       // Fetch original requests to get item details
-      const requestsResponse = await fetch('http://192.168.50.132:3001/cssd_requests');
+      const requestsResponse = await fetch('http://192.168.50.95:3001/cssd_requests');
       const requestsData = await requestsResponse.json();
       
       console.log('Refreshed completed sterilization processes:', completedProcesses);
@@ -182,7 +184,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
             process: process.process,
           };
           
-          await fetch('http://192.168.50.132:3001/availableItems', {
+          await fetch('http://192.168.50.95:3001/availableItems', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newItem),
@@ -234,7 +236,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     if (!itemToIssue) {
       try {
         // Fetch the request details from the database
-        const response = await fetch(`http://192.168.50.132:3001/cssd_requests/${selectedRequestId}`);
+        const response = await fetch(`http://192.168.50.95:3001/cssd_requests/${selectedRequestId}`);
         if (response.ok) {
           const requestData = await response.json();
           itemToIssue = {
@@ -275,7 +277,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
 
     try {
       // Save to backend
-      const response = await fetch('http://192.168.50.132:3001/issueItems', {
+      const response = await fetch('http://192.168.50.95:3001/issueItems', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -292,7 +294,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
         
         // Remove the issued item from available items in database
         try {
-          await fetch(`http://192.168.50.132:3001/availableItems/${selectedRequestId}`, {
+          await fetch(`http://192.168.50.95:3001/availableItems/${selectedRequestId}`, {
             method: 'DELETE'
           });
         } catch (error) {
@@ -351,10 +353,10 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     <>
       <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator/>
       <PageContainer>
-        <SectionHeading
+      <SectionHeading 
           title={currentStep === 0 ? "Issue Item" : "Issue History"}
           subtitle={currentStep === 0 ? "Issue sterilized items to departments and outlets" : "View all issued items"}
-          className="Issueitem-heading w-100"
+          className="Issueitem-heading w-100" 
         />
         <Stepper currentStep={currentStep} steps={stepLabels} />
         {error && (
@@ -371,103 +373,105 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
         )}
         {currentStep === 0 && (
           <>
-            <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
-              <Cards title="Available" subtitle={availableCount} />
-              <Cards title="Issued Today" subtitle={issuedTodayCount} />
-              <Cards title="Total Issued" subtitle={totalIssuedCount} />
-            </div>
+         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6">
+          <Cards title="Available" subtitle={availableCount} />
+          <Cards title="Issued Today" subtitle={issuedTodayCount} />
+          <Cards title="Total Issued" subtitle={totalIssuedCount} />
+         </div>
             {/* Make the issue card full width */}
             <div style={{ width: '100%' }}>
               <div className="issue-card" style={{ width: '100%' }}>
-                <div className="issue-card-header">
+            <div className="issue-card-header">
                   Issue Items
+        </div>
+            <div className="issue-card-content">
+              <form onSubmit={handleIssueItem} className="form-grid">
+                {/* <div className="form-group"> */}
+                      {/* <label className="form-label" htmlFor="requestId">Request ID <span style={{color: 'red'}}>*</span></label> */}
+                      {/* <div className="flex gap-2"> */}
+                  <DropInput
+                    label="Request ID"
+                    value={selectedRequestId}
+                    onChange={(e) => setSelectedRequestId(e.target.value)}
+                    width={'50%'}
+                    options={[
+                      { label: "Select sterilized item to issue", value: "" },
+                      ...Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
+                        const item = availableItems.find(i => i.id === id);
+                        const request = allRequests.find(r => r.id === id);
+                        if (item) {
+                          return {
+                            label: `${id} - ${item.items} (${item.quantity}) [Sterilized]`,
+                            value: id
+                          };
+                        } else if (request) {
+                          return {
+                            label: `${id} - ${request.items} (${request.quantity}) [${request.status}]`,
+                            value: id
+                          };
+                        } else {
+                          return {
+                            label: id,
+                            value: id
+                          };
+                        }
+                      })
+                    ]}
+                  />
+                      {/* </div> */}
+                {/* </div> */}
+                {/* <div className="form-group"> */}
+                      {/* <label className="form-label" htmlFor="outlet">Department/Outlet <span style={{color: 'red'}}>*</span></label>
+                  <select
+                    id="outlet"
+                    name="outlet"
+                    className="form-input"
+                    value={selectedOutlet}
+                    onChange={(e) => setSelectedOutlet(e.target.value)}
+                    required
+                  >
+                    <option value="">Select destination</option>
+                    <option value="OR-1">Operating Room 1</option>
+                    <option value="OR-2">Operating Room 2</option>
+                    <option value="ICU">ICU</option>
+                  </select> */}
+                  <DropInput label="Department/Outlet" value={selectedOutlet}
+                    onChange={(e) => setSelectedOutlet(e.target.value)}
+                    width={'50%'}
+                    options={[
+                      {label:'Operating Room 1',value:'OR-1'},
+                      {label:'Operating Room 2',value:'OR-2'},
+                      {label:'ICU',value:'ICU'},
+                    ]}/>
+                {/* </div> */}
+                <div className="form-row" style={{display:"flex"}}>
+                  <Input label="Issue Item" type="text" value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })} width={'250px'}/>
+                    {/* <label className="form-label">Issue Time</label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
+                      readOnly
+                    /> */}
+                    <Input type="text" label="Issue Date" value={new Date().toISOString().split("T")[0]} width={'250px'}/>
+                    {/* <label className="form-label">Issue Date</label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      value={new Date().toISOString().split("T")[0]}
+                      readOnly
+                    /> */}
                 </div>
-                <div className="issue-card-content">
-                  <form onSubmit={handleIssueItem} className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="requestId">Request ID <span style={{color: 'red'}}>*</span></label>
-                      <div className="flex gap-2">
-                        <select
-                          id="requestId"
-                          name="requestId"
-                          className="form-input flex-1"
-                          value={selectedRequestId}
-                          onChange={(e) => setSelectedRequestId(e.target.value)}
-                          required
-                        >
-                          <option value="">Select sterilized item to issue</option>
-                          {Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
-                            const item = availableItems.find(i => i.id === id);
-                            const request = allRequests.find(r => r.id === id);
-                            if (item) {
-                              return (
-                                <option key={id} value={id}>
-                                  {id} - {item.items} ({item.quantity}) [Sterilized]
-                                </option>
-                              );
-                            } else if (request) {
-                              return (
-                                <option key={id} value={id}>
-                                  {id} - {request.items} ({request.quantity}) [{request.status}]
-                                </option>
-                              );
-                            } else {
-                              return (
-                                <option key={id} value={id}>
-                                  {id}
-                                </option>
-                              );
-                            }
-                          })}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="outlet">Department/Outlet <span style={{color: 'red'}}>*</span></label>
-                      <select
-                        id="outlet"
-                        name="outlet"
-                        className="form-input"
-                        value={selectedOutlet}
-                        onChange={(e) => setSelectedOutlet(e.target.value)}
-                        required
-                      >
-                        <option value="">Select destination</option>
-                        <option value="OR-1">Operating Room 1</option>
-                        <option value="OR-2">Operating Room 2</option>
-                        <option value="ICU">ICU</option>
-                      </select>
-                    </div>
-                    <div className="form-row">
-                      <div>
-                        <label className="form-label">Issue Time</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
-                          readOnly
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label">Issue Date</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={new Date().toISOString().split("T")[0]}
-                          readOnly
-                        />
-                      </div>
-                    </div>
                     <ButtonWithGradient
                       type="submit"
                       className="button-gradient w-full"
                       disabled={!selectedRequestId || !selectedOutlet || loading}
                     >
                       {loading ? "Issuing..." : "Issue Item"}
-                    </ButtonWithGradient>
-                  </form>
-                </div>
-              </div>
+                </ButtonWithGradient>
+              </form>
+            </div>
+          </div>
             </div>
             <div className="flex justify-content-end gap-2 mt-4">
               <ButtonWithGradient type="button" className="button-gradient" disabled>
@@ -481,17 +485,17 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
         )}
         {currentStep === 1 && (
           <>
-            <div className="issue-table">
-              <div className="issue-table-header">
-                Issue History
-                <div className="search-container">
-                  <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                </div>
-              </div>
-              <div className="issue-table-content">
-                <Table columns={columns} data={filteredIssuedItems} />
-              </div>
+        <div className="issue-table">
+          <div className="issue-table-header">
+             Issue History
+            <div className="search-container">
+              <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
+          </div>
+          <div className="issue-table-content">
+            <Table columns={columns} data={filteredIssuedItems} />
+          </div>
+        </div>
             <div className="flex justify-content-end gap-2 mt-4">
               <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(0)}>
                 Back

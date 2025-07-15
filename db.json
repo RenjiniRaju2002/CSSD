@@ -29,7 +29,7 @@
       "quantity": 6,
       "priority": "Medium",
       "requestedBy": "fdsfsd",
-      "status": "Requested",
+      "status": "Approved",
       "date": "2025-07-10",
       "time": "10:54 am"
     },
@@ -40,9 +40,31 @@
       "quantity": 5,
       "priority": "High",
       "requestedBy": "lini",
-      "status": "Requested",
+      "status": "Approved",
       "date": "2025-07-11",
       "time": "04:54 pm"
+    },
+    {
+      "id": "REQ005",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 6,
+      "priority": "Medium",
+      "requestedBy": "Reema",
+      "status": "Approved",
+      "date": "2025-07-15",
+      "time": "10:56 am"
+    },
+    {
+      "id": "REQ006",
+      "department": "Neurology",
+      "items": "scissors",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "shiva",
+      "status": "Approved",
+      "date": "2025-07-15",
+      "time": "04:29 pm"
     }
   ],
   "receive_items": [
@@ -82,7 +104,7 @@
       "quantity": 6,
       "priority": "Medium",
       "requestedBy": "fdsfsd",
-      "status": "Pending",
+      "status": "Approved",
       "date": "2025-07-10",
       "time": "10:54 am",
       "receivedDate": "2025-07-10",
@@ -96,11 +118,39 @@
       "quantity": 5,
       "priority": "High",
       "requestedBy": "lini",
-      "status": "Pending",
+      "status": "Approved",
       "date": "2025-07-11",
       "time": "04:54 pm",
       "receivedDate": "2025-07-11",
       "receivedTime": "04:54 pm"
+    },
+    {
+      "id": "REC005",
+      "requestId": "REQ005",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 6,
+      "priority": "Medium",
+      "requestedBy": "Reema",
+      "status": "Approved",
+      "date": "2025-07-15",
+      "time": "10:56 am",
+      "receivedDate": "2025-07-15",
+      "receivedTime": "10:56 am"
+    },
+    {
+      "id": "REC006",
+      "requestId": "REQ006",
+      "department": "Neurology",
+      "items": "scissors",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "shiva",
+      "status": "Approved",
+      "date": "2025-07-15",
+      "time": "04:29 pm",
+      "receivedDate": "2025-07-15",
+      "receivedTime": "04:29 pm"
     }
   ],
   "stockItems": [
@@ -212,19 +262,92 @@
       "endTime": "16:22",
       "status": "Completed",
       "duration": 45
+    },
+    {
+      "id": "STE009",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ004",
+      "startTime": "17:11",
+      "endTime": "17:11",
+      "status": "Completed",
+      "duration": 75
+    },
+    {
+      "id": "STE010",
+      "machine": "Autoclave-3",
+      "process": "Steam Sterilization",
+      "itemId": "REQ005",
+      "startTime": "10:57",
+      "endTime": "12:15",
+      "status": "Completed",
+      "duration": 45
+    },
+    {
+      "id": "STE001",
+      "machine": "Autoclave-1",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ002",
+      "startTime": "16:06",
+      "endTime": "",
+      "status": "In Progress",
+      "duration": 75
+    },
+    {
+      "id": "STE012",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization",
+      "itemId": "REQ006",
+      "startTime": "16:30",
+      "endTime": "16:30",
+      "status": "Completed",
+      "duration": 45
     }
   ],
   "availableItems": [
+    {
+      "id": "REQ004",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 5,
+      "status": "Sterilized",
+      "readyTime": "17:11",
+      "sterilizationId": "STE009",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization"
+    },
+    {
+      "id": "REQ005",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 6,
+      "status": "Sterilized",
+      "readyTime": "12:15",
+      "sterilizationId": "STE010",
+      "machine": "Autoclave-3",
+      "process": "Steam Sterilization"
+    },
     {
       "id": "REQ002",
       "department": "Neurology",
       "items": "scissors, forcaps",
       "quantity": 9,
       "status": "Sterilized",
-      "readyTime": "16:22",
-      "sterilizationId": "STE006",
+      "readyTime": "16:06",
+      "sterilizationId": "STE001",
       "machine": "Autoclave-2",
       "process": "Chemical Sterilization"
+    },
+    {
+      "id": "REQ006",
+      "department": "Neurology",
+      "items": "scissors",
+      "quantity": 5,
+      "status": "Sterilized",
+      "readyTime": "16:30",
+      "sterilizationId": "STE012",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization"
     }
   ],
   "createdKits": [
@@ -272,6 +395,36 @@
       "issuedTime": "13:59",
       "issuedDate": "2025-07-10",
       "status": "Issued (Non-Sterilized)"
+    },
+    {
+      "id": "ISS002",
+      "requestId": "REQ001",
+      "department": "OR-1",
+      "items": "scissors",
+      "quantity": 4,
+      "issuedTime": "17:12",
+      "issuedDate": "2025-07-11",
+      "status": "Issued (Non-Sterilized)"
+    },
+    {
+      "id": "ISS003",
+      "requestId": "REQ002",
+      "department": "OR-2",
+      "items": "scissors, forcaps",
+      "quantity": 9,
+      "issuedTime": "14:41",
+      "issuedDate": "2025-07-15",
+      "status": "Issued"
+    },
+    {
+      "id": "ISS004",
+      "requestId": "REQ001",
+      "department": "ICU",
+      "items": "scissors",
+      "quantity": 4,
+      "issuedTime": "14:41",
+      "issuedDate": "2025-07-15",
+      "status": "Issued (Non-Sterilized)"
     }
   ],
   "consumptionRecords": [
@@ -294,6 +447,30 @@
       "after": 2,
       "used": 3,
       "items": "3"
+    },
+    {
+      "id": "SURG-1752561869239",
+      "type": "knee replacement",
+      "dept": "Neurology",
+      "date": "2025-07-15",
+      "before": 2,
+      "after": 2,
+      "used": 1,
+      "items": "1",
+      "requestId": "REQ002",
+      "kitId": ""
+    },
+    {
+      "id": "SURG-1752568315137",
+      "type": "hip replacement",
+      "dept": "Neurology",
+      "date": "2025-07-15",
+      "before": 6,
+      "after": 6,
+      "used": 5,
+      "items": "5",
+      "requestId": "REQ002",
+      "kitId": "KIT003"
     }
   ]
 }

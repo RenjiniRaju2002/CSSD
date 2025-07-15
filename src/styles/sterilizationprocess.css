@@ -96,4 +96,14 @@
   .select-trigger:hover {
     border-color: #9ca3af;
   }
+
+.w-50 {
+  width: 50% !important;
+}
+
+/* Make all .form-input fields in the sterilization process page 50% width */
+.card-content .form-input {
+  width: 50%;
+  max-width: 100%;
+}
   

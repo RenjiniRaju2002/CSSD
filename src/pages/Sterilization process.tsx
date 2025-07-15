@@ -12,6 +12,7 @@ import Cards from "../components/Cards";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import Stepper from '../components/Stepper';
+import DropInput from "../components/DropInput";
 
 interface SterilizationProcessProps {
   sidebarCollapsed?: boolean;
@@ -78,18 +79,18 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
 
   // Fetch sterilization processes from database
   useEffect(() => {
-    fetch('http://192.168.50.132:3001/sterilizationProcesses')
+    fetch('http://192.168.50.95:3001/sterilizationProcesses')
       .then(res => res.json())
       .then(data => setProcesses(data))
       .catch(() => setProcesses([]));
   }, []);
 
   useEffect(() => {
-    // Fetch approved requests from database
-    fetch('http://192.168.50.132:3001/cssd_requests')
+    // Fetch receive_items and only include those with status 'Approved'
+    fetch('http://192.168.50.95:3001/receive_items')
       .then(res => res.json())
       .then(data => {
-        const approvedRequests = data.filter((r: any) => r.status === "Approved");
+        const approvedRequests = data.filter((r: any) => r.status === 'Approved');
         setAvailableRequests(approvedRequests);
       })
       .catch(() => setAvailableRequests([]));
@@ -137,7 +138,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     setProcesses(updatedProcesses);
 
     // Update in database
-    await fetch(`http://192.168.50.132:3001/sterilizationProcesses/${id}`, {
+    await fetch(`http://192.168.50.95:3001/sterilizationProcesses/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updateData)
@@ -154,7 +155,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     if (newStatus === "Completed") {
       try {
         // Fetch the original request details
-        const requestResponse = await fetch(`http://192.168.50.132:3001/cssd_requests/${processToUpdate.itemId}`);
+        const requestResponse = await fetch(`http://192.168.50.95:3001/cssd_requests/${processToUpdate.itemId}`);
         if (requestResponse.ok) {
           const requestData = await requestResponse.json();
           
@@ -172,13 +173,13 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
           };
 
           // Check if item already exists in available items
-          const existingItemsResponse = await fetch('http://192.168.50.132:3001/availableItems');
+          const existingItemsResponse = await fetch('http://192.168.50.95:3001/availableItems');
           const existingItems = await existingItemsResponse.json();
           const existingItem = existingItems.find((item: any) => item.id === processToUpdate.itemId);
 
           if (!existingItem) {
             // Add to available items database
-            const addResponse = await fetch('http://192.168.50.132:3001/availableItems', {
+            const addResponse = await fetch('http://192.168.50.95:3001/availableItems', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(availableItem),
@@ -192,7 +193,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
           } else {
             console.log('Item already exists in available items:', processToUpdate.itemId);
             // Update the existing item with new sterilization info
-            const updateResponse = await fetch(`http://192.168.50.132:3001/availableItems/${processToUpdate.itemId}`, {
+            const updateResponse = await fetch(`http://192.168.50.95:3001/availableItems/${processToUpdate.itemId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -246,20 +247,21 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     };
 
     // Save to database
-    await fetch('http://192.168.50.132:3001/sterilizationProcesses', {
+    await fetch('http://192.168.50.95:3001/sterilizationProcesses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newProcess)
     });
 
     // Fetch updated processes
-    const res = await fetch('http://192.168.50.132:3001/sterilizationProcesses');
+    const res = await fetch('http://192.168.50.95:3001/sterilizationProcesses');
     const updated = await res.json();
     setProcesses(updated);
 
     setSelectedMachine("");
     setSelectedProcess("");
     setSelectedRequestId("");
+    setCurrentStep(1); // Go to Active Processes step
   };
 
   // Summary cards
@@ -364,55 +366,66 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
               </div>
             </div>
             <div className="card-content">
-              <form onSubmit={async (event) => {
-                await startSterilization(event);
-                if (selectedMachine && selectedProcess && selectedRequestId) {
-                  setTimeout(() => {
-                    const latest = processes[processes.length];
-                    setLastStartedProcessId(latest?.id || null);
-                    setCurrentStep(1);
-                  }, 300);
-                }
-              }}>
+              <form onSubmit={startSterilization}>
                 <div className="mb-4">
-                    <label className="form-label">Select Machine <span style={{color: 'red'}}>*</span></label>
-                    <select className="form-input" value={selectedMachine} onChange={e => setSelectedMachine(e.target.value)} required>
-                      <option value="">Choose sterilization machine</option>
-                      {machines.map(m => (
-                        <option key={m.id} value={m.name}>{m.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className="form-label">Sterilization Method <span style={{color: 'red'}}>*</span></label>
-                    <select className="form-input" value={selectedProcess} onChange={e => setSelectedProcess(e.target.value)} required>
-                      <option value="">Choose sterilization method</option>
-                      {sterilizationMethods.map(method => (
-                        <option key={method.id} value={method.name}>{method.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label>
-                    <div className="flex gap-2">
-                      <select className="form-input flex-1" value={selectedRequestId} onChange={e => setSelectedRequestId(e.target.value)} required>
-                      <option value="">Select approved request ID</option>
-                      {availableRequests.map(req => (
-                          <option key={req.id} value={req.id}>
-                            {req.id} - {req.department} ({req.items})
-                          </option>
-                      ))}
-                    </select>
+                    {/* <label className="form-label">Select Machine <span style={{color: 'red'}}>*</span></label> */}
+                    <DropInput
+                      label="Select Machine"
+                      value={selectedMachine}
+                      onChange={e => setSelectedMachine(e.target.value)}
+                      options={[
+                        { label: "Choose sterilization machine", value: "" },
+                        ...machines.map(m => ({
+                          label: m.name,
+                          value: m.name
+                        }))
+                      ]}
+                      width="50%"
+                    />
+                    {/* </select> */}
+                </div>
+                <div className="mb-4">
+                    {/* <label className="form-label">Sterilization Method <span style={{color: 'red'}}>*</span></label> */}
+                    <DropInput
+                      label="Sterilization Method"
+                      value={selectedProcess}
+                      onChange={e => setSelectedProcess(e.target.value)}
+                      options={[
+                        { label: "Choose sterilization method", value: "" },
+                        ...sterilizationMethods.map(method => ({
+                          label: method.name,
+                          value: method.name
+                        }))
+                      ]}
+                      width="50%"
+                    />
+                </div>
+                <div className="mb-4">
+                    {/* <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label> */}
+                    {/* <div className="flex gap-2"> */}
+                      <DropInput
+                        label="Item/Request ID"
+                        value={selectedRequestId}
+                        onChange={e => setSelectedRequestId(e.target.value)}
+                        options={[
+                          { label: "Select approved request ID", value: "" },
+                          ...availableRequests.map(req => ({
+                            label: `${req.requestId || req.id} - ${req.department} (${req.items})`,
+                            value: req.requestId || req.id
+                          }))
+                        ]}
+                        width="50%"
+                      />
                    
-                    </div>
+                    {/* </div> */}
                     {availableRequests.length === 0 && (
                       <p className="text-sm text-gray-500 mt-1">No approved requests available. Approve a request in Receive Items first.</p>
                     )}
-                  </div>
-                  <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
-                    Start Sterilization Process
-                  </ButtonWithGradient>
-                </form>
+                </div>
+                <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
+                  Start Sterilization Process
+                </ButtonWithGradient>
+              </form>
               </div>
             <div className="flex justify-content-end gap-2 mt-2">
               <ButtonWithGradient type="button" className="button-gradient" disabled>
@@ -485,25 +498,25 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
         {showMachineStatusModal && (
           <div className="dialog-overlay">
             <div className="dialog-content" style={{ maxWidth: '500px', width: '90%' }}>
-              <div className="card">
+          <div className="card">
                 <div className="card-header flex items-center justify-between">
                   <span className="text-red-600 flex items-center"><AlertCircle className="mr-2" /> Machine Status</span>
                   <button className="text-gray-500 hover:text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center" onClick={() => setShowMachineStatusModal(false)} style={{ border: '1px solid #e5e7eb', boxShadow: 'none' }}>×</button>
-                </div>
-                <div className="card-content">
-                  {machines.map(m => (
-                    <div key={m.id} className="flex justify-between items-center mb-3">
-                      <span>{m.name}</span>
-                      <select className="form-input w-32" value={m.status} onChange={e => handleMachineStatusChange(m.id, e.target.value)}>
-                        <option value="Available">Available</option>
-                        <option value="In Use">In Use</option>
-                        <option value="Maintenance">Maintenance</option>
-                      </select>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
+            <div className="card-content">
+              {machines.map(m => (
+                <div key={m.id} className="flex justify-between items-center mb-3">
+                  <span>{m.name}</span>
+                  <select className="form-input w-32" value={m.status} onChange={e => handleMachineStatusChange(m.id, e.target.value)}>
+                    <option value="Available">Available</option>
+                    <option value="In Use">In Use</option>
+                    <option value="Maintenance">Maintenance</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
           </div>
         )}
       </PageContainer>

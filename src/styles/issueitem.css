@@ -61,11 +61,12 @@
 
 .form-row {
   display: flex;
-  gap: 1rem;
+  gap: 2.5rem;
+  /* border: 1px solid red; */
 }
 
 .form-row > div {
-  flex: 1;
+  flex: 0;
 }
 
 .form-label {
@@ -78,6 +79,7 @@
 
 .form-input {
   width: 100%;
+  max-width: 220px;
   padding: 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -172,4 +174,24 @@
   .metrics-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+.w-50 {
+  width: 50% !important;
+}
+
+.w-25 {
+  width: 25% !important;
+}
+
+/* Make all .form-input fields in the Issue Item page 50% width */
+.issue-card-content .form-input {
+  width: 50%;
+  max-width: 100%;
+}
+
+/* Make Issue Time and Issue Date input fields 25% width in the same row */
+.form-row .form-input {
+  width: 25%;
+  max-width: 100%;
 }

@@ -36,7 +36,7 @@ const StockManagement: React.FC<StockManagementProps> = ({ sidebarCollapsed = fa
   const [showEditItem, setShowEditItem] = useState(false);
 
   useEffect(() => {
-    fetch('http://192.168.50.132:3001/stockItems')
+    fetch('http://192.168.50.95:3001/stockItems')
       .then(res => res.json())
       .then(data => setStockItems(data))
       .catch(() => setStockItems([]));
@@ -67,14 +67,14 @@ const StockManagement: React.FC<StockManagementProps> = ({ sidebarCollapsed = fa
     };
 
     // Save to backend
-    await fetch('http://192.168.50.132:3001/stockItems', {
+    await fetch('http://192.168.50.95:3001/stockItems', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newItem)
     });
 
     // Fetch updated stock items
-    const res = await fetch('http://192.168.50.132:3001/stockItems');
+    const res = await fetch('http://192.168.50.95:3001/stockItems');
     const updated = await res.json();
     setStockItems(updated);
 

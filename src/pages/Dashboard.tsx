@@ -40,7 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
       setLoading(true);
       try {
         // Get active requests count
-        const requestsRes = await fetch('http://192.168.50.132:3001/cssd_requests');
+        const requestsRes = await fetch('http://192.168.50.95:3001/cssd_requests');
         const requests = await requestsRes.json();
         const activeCount = requests.filter((r: any) => r.status === 'Requested' || r.status === 'In Progress').length;
         // Get latest new request
@@ -48,7 +48,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
         const latestRequest = sortedRequests.find((r: any) => r.status === 'Requested');
 
         // Get sterilization in progress count
-        const processesRes = await fetch('http://192.168.50.132:3001/sterilizationProcesses');
+        const processesRes = await fetch('http://192.168.50.95:3001/sterilizationProcesses');
         const processes = await processesRes.json();
         const inProgressCount = processes.filter((p: any) => p.status === 'In Progress').length;
         // Get latest completed sterilization
@@ -59,7 +59,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
         // Get items ready count (completed sterilization processes)
         const completedCount = completedProcesses.length;
         // Get low stock count
-        const stockRes = await fetch('http://192.168.50.132:3001/stockItems');
+        const stockRes = await fetch('http://192.168.50.95:3001/stockItems');
         const stock = await stockRes.json();
         const lowStockCount = stock.filter((item: any) => item.status === 'Low Stock').length;
 
@@ -103,12 +103,12 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
       setLoading(true);
       try {
         // Get active requests count
-        const requestsRes = await fetch('http://192.168.50.132:3001/cssd_requests');
+        const requestsRes = await fetch('http://192.168.50.95:3001/cssd_requests');
         const requests = await requestsRes.json();
         const activeCount = requests.filter((r: any) => r.status === 'Requested' || r.status === 'In Progress').length;
         
         // Get sterilization in progress count
-        const processesRes = await fetch('http://192.168.50.132:3001/sterilizationProcesses');
+        const processesRes = await fetch('http://192.168.50.95:3001/sterilizationProcesses');
         const processes = await processesRes.json();
         const inProgressCount = processes.filter((p: any) => p.status === 'In Progress').length;
         
@@ -116,7 +116,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarCollapsed = false, toggleS
         const completedCount = processes.filter((p: any) => p.status === 'Completed').length;
         
         // Get low stock count
-        const stockRes = await fetch('http://192.168.50.132:3001/stockItems');
+        const stockRes = await fetch('http://192.168.50.95:3001/stockItems');
         const stock = await stockRes.json();
         const lowStockCount = stock.filter((item: any) => item.status === 'Low Stock').length;
         

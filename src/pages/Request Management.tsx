@@ -15,6 +15,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import Stepper from '../components/Stepper';
 import Input from "../components/Input";
+import DropInput from "../components/DropInput";
+import DateInput from "../components/DateInput";
 
 interface Request {
   id: string;
@@ -156,7 +158,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
   // Fetch requests from database
   useEffect(() => {
-    fetch('http://192.168.50.132:3001/cssd_requests')
+    fetch('http://192.168.50.95:3001/cssd_requests')
       .then(res => res.json())
       .then(data => setRequests(data))
       .catch(() => setRequests([]));
@@ -164,7 +166,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
   // Fetch created kits from database
   useEffect(() => {
-    fetch('http://192.168.50.132:3001/createdKits')
+    fetch('http://192.168.50.95:3001/createdKits')
       .then(res => res.json())
       .then(data => setCreatedKits(data))
       .catch(() => setCreatedKits([]));
@@ -196,7 +198,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
   // Handlers
   const addItemToList = () => {
-    if (!validateFormFields()) {
+    if (!itemInput || !itemQuantity) {
+      window.alert('Please fill in both the Item/Kit and Quantity fields before adding a request.');
       return;
     }
     
@@ -266,7 +269,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     };
     
     // POST to API for cssd_requests
-    await fetch('http://192.168.50.132:3001/cssd_requests', {
+    await fetch('http://192.168.50.95:3001/cssd_requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newRequest)
@@ -290,14 +293,14 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     };
 
     // POST to API for receive_items
-    await fetch('http://192.168.50.132:3001/receive_items', {
+    await fetch('http://192.168.50.95:3001/receive_items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newReceiveItem)
     });
 
     // Fetch updated requests
-    const res = await fetch('http://192.168.50.132:3001/cssd_requests');
+    const res = await fetch('http://192.168.50.95:3001/cssd_requests');
     const updated = await res.json();
     setRequests(updated);
 
@@ -362,7 +365,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     };
     
     // POST to API for createdKits
-    await fetch('http://192.168.50.132:3001/createdKits', {
+    await fetch('http://192.168.50.95:3001/createdKits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newKit)
@@ -386,14 +389,14 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     };
 
     // POST to API for receive_items
-    await fetch('http://192.168.50.132:3001/receive_items', {
+    await fetch('http://192.168.50.95:3001/receive_items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newReceiveItem)
     });
     
     // Fetch updated kits
-    const res = await fetch('http://192.168.50.132:3001/createdKits');
+    const res = await fetch('http://192.168.50.95:3001/createdKits');
     const updated = await res.json();
     setCreatedKits(updated);
     // Reset form and close modal
@@ -413,7 +416,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     setRequests(updatedRequests);
 
     // POST to API
-    await fetch(`http://192.168.50.132:3001/cssd_requests/${id}`, {
+    await fetch(`http://192.168.50.95:3001/cssd_requests/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
@@ -446,95 +449,97 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             <div className="card-content">
               <form onSubmit={handleSaveRequest}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                  <div>
-                    <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label>
-                    <select 
-                      className="form-input"
-                      name="department"
-                      required
-                      value={selectedDepartment}
-                      onChange={(e) => setSelectedDepartment(e.target.value)}
-                    >
-                      <option value="">Select department</option>
-                      <option value="Cardiology">Cardiology</option>
-                      <option value="Neurology">Neurology</option>
-                      <option value="Orthopedics">Orthopedics</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label>
-                    <select 
-                      className="form-input"
-                      name="priority"
-                      required
-                      value={selectedPriority}
-                      onChange={(e) => setSelectedPriority(e.target.value)}
-                    >
-                      <option value="">Select priority</option>
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter requester name"
-                      value={requestedBy}
-                      onChange={(e) => setRequestedBy(e.target.value)}
-                      required
-                    />
-                    {/* <Input label="Requested By" type="text" placeholder="Enter requester name" value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} required/> */}
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="form-label">Item /Kit <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Add item name"
-                      value={itemInput}
-                      onChange={(e) => setItemInput(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label className="form-label">Quantity <span style={{color: 'red'}}>*</span></label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      placeholder="Enter quantity"
-                      min="1"
-                      value={itemQuantity}
-                      onChange={(e) => setItemQuantity(e.target.value)}
-                    />
-                </div>
-                  <div>
-                    <label className="form-label">Required Date <span style={{color: 'red'}}>*</span></label>
-                    <div className="flex items-center">
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
-                        required
+                    <div>
+                      {/* <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label> */}
+                      <DropInput
+                        label="Outlet"
+                        value={selectedDepartment}
+                        onChange={e => setSelectedDepartment(e.target.value)}
+                        options={[
+                          { label: "Select outlet", value: "" },
+                          { label: "Cardiology", value: "Cardiology" },
+                          { label: "Neurology", value: "Neurology" },
+                          { label: "Orthopedics", value: "Orthopedics" }
+                        ]}
+                      
+                        width="50%"
                       />
-                  </div>
+                    </div>
+                    <div>
+                      {/* <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label> */}
+                      <DropInput
+                        label="Priority"
+                        value={selectedPriority}
+                        onChange={e => setSelectedPriority(e.target.value)}
+                        options={[
+                          { label: "Select priority", value: "" },
+                          { label: "High", value: "High" },
+                          { label: "Medium", value: "Medium" },
+                          { label: "Low", value: "Low" }
+                        ]}
+                      
+                        width="50%"
+                      />
+                    </div>
+                    <div>
+                      {/* <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
+                      <input
+                        type="text"
+                        placeholder="Enter requester name"
+                        value={requestedBy}
+                        onChange={(e) => setRequestedBy(e.target.value)}
+                        required
+                      /> */}
+                      <Input label="Requested By" type="text" placeholder="Enter requester name" value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} required  width={'50%'}/>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Input
+                        label="Item /Kit"
+                        type="text"
+                        placeholder="Add item name"
+                        value={itemInput}
+                        onChange={(e) => setItemInput(e.target.value)}
+                        required
+                        width={'50%'}
+                      />
+                    </div>  
+                      <div>
+                          <Input
+                            label="Quantity"
+                            type="number"
+                            placeholder="Enter quantity"
+                            // min={1}
+                            value={itemQuantity}
+                            onChange={(e) => setItemQuantity(e.target.value)}
+                            required
+                            width={'50%'}
+                          />
+                      </div>
+                      <div>
+                        {/* <label className="form-label">Required Date <span style={{color: 'red'}}></span></label> */}
+                        <DateInput
+                          label="Required date"
+                          // type="date"
+                          // className="form-input"
+                          value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+                          onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
+                          // required
+                          width={'50%'}
+                        />
+                      </div>
                 </div>
-                </div>
+                {/* </div> */}
                
 
-        <ButtonWithGradient
-        className='button-gradient w-25 mt-2'
-       
-        text="Fallback text"
-        onClick={addItemToList}
-        disabled={!itemInput || !itemQuantity}
-        
-        type="button"
-      >
-        Add Request
-      </ButtonWithGradient>
+                  <ButtonWithGradient
+                  // className='button-gradient w-15 mt-2'
+                
+                  text="Add Request"
+                  onClick={addItemToList}
+                  disabled={!itemInput || !itemQuantity}
+                  
+                  type="button"
+                />
               </form>
               {pendingItems.length > 0 && (
                 <div className="mt-6">
