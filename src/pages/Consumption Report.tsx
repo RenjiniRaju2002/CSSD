@@ -9,6 +9,8 @@ import Cards from "../components/Cards";
 import Table from "../components/Table";
 import SectionHeading from "../components/SectionHeading";
 import PageContainer from "../components/PageContainer";
+import DropInput from "../components/DropInput";
+import Input from "../components/Input";
 
 interface ConsumptionReportsProps {
   sidebarCollapsed?: boolean;
@@ -454,11 +456,10 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
               setShowAddModal(false);
             }}>
               <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', maxWidth: 600 }}>
-                {/* Request ID dropdown */}
+                {/* Request ID dropdown replaced with DropInput */}
                 <div>
-                  <label className="form-label">Request ID</label>
-                  <select
-                    className="form-input"
+                  <DropInput
+                    label="Request ID"
                     value={form.requestId}
                     onChange={e => setForm({ ...form, requestId: e.target.value })}
                     options={[
@@ -470,63 +471,97 @@ const ConsumptionReports: React.FC<ConsumptionReportsProps> = ({ sidebarCollapse
                           value: r.id
                         }))
                     ]}
-                    disabled={!form.dept}
                     width="100%"
                   />
                 </div>
-                {/* Kit ID dropdown */}
+                {/* Kit ID dropdown replaced with DropInput */}
                 <div>
-                  <label className="form-label">Kit ID</label>
-                  <select
-                    className="form-input"
+                  <DropInput
+                    label="Kit ID"
                     value={form.kitId}
                     onChange={e => setForm({ ...form, kitId: e.target.value })}
-                    disabled={!form.dept}
-                  >
-                    <option value="">Select kit</option>
-                    {kits.filter(k => k.department === form.dept).map(k => (
-                      <option key={k.id} value={k.id}>{k.id} - {k.name}</option>
-                    ))}
-                  </select>
-              </div>
-                {/* Surgery ID field removed, generated automatically */}
+                    options={[
+                      { label: "Select kit", value: "" },
+                      ...kits.filter(k => k.department === form.dept).map(k => ({
+                        label: `${k.id} - ${k.name}`,
+                        value: k.id
+                      }))
+                    ]}
+                    width="100%"
+                  />
+                </div>
+                {/* Surgery Type input replaced with Input */}
                 <div>
-                  <label className="form-label">Surgery Type <span style={{color: 'red'}}>*</span></label>
-                <input className="form-input" type="text" required value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} />
-              </div>
-                <div>
-                  <label className="form-label">Department <span style={{color: 'red'}}>*</span></label>
-                  <select
-                    className="form-input"
+                  <Input
+                    label="Surgery Type"
+                    value={form.type}
+                    onChange={e => setForm({ ...form, type: e.target.value })}
                     required
+                  />
+                </div>
+                {/* Department dropdown replaced with DropInput */}
+                <div>
+                  <DropInput
+                    label="Department"
                     value={form.dept}
                     onChange={e => setForm({ ...form, dept: e.target.value })}
-                  >
-                    <option value="">Select outlet</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                  </select>
-              </div>
-                <div>
-                  <label className="form-label">Date <span style={{color: 'red'}}>*</span></label>
-                <input className="form-input" type="date" required value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
-              </div>
-                <div>
-                  <label className="form-label">Before Count <span style={{color: 'red'}}>*</span></label>
-                <input className="form-input" type="number" required value={form.before} onChange={e => setForm({ ...form, before: e.target.value })} />
-              </div>
-                <div>
-                  <label className="form-label">After Count <span style={{color: 'red'}}>*</span></label>
-                <input className="form-input" type="number" required value={form.after} onChange={e => setForm({ ...form, after: e.target.value })} />
-              </div>
-                <div>
-                  <label className="form-label">Consumed <span style={{color: 'red'}}>*</span></label>
-                <input className="form-input" type="number" required value={form.used} onChange={e => setForm({ ...form, used: e.target.value })} />
+                    options={[
+                      { label: "Select outlet", value: "" },
+                      { label: "Cardiology", value: "Cardiology" },
+                      { label: "Neurology", value: "Neurology" },
+                      { label: "Orthopedics", value: "Orthopedics" }
+                    ]}
+                    width="100%"
+                  />
                 </div>
+                {/* Date input replaced with Input */}
+                <div>
+                  <Input
+                    label="Date"
+                    type="date"
+                    value={form.date}
+                    onChange={e => setForm({ ...form, date: e.target.value })}
+                    required
+                  />
+                </div>
+                {/* Before Count input replaced with Input */}
+                <div>
+                  <Input
+                    label="Before Count"
+                    type="number"
+                    value={form.before}
+                    onChange={e => setForm({ ...form, before: e.target.value })}
+                    required
+                  />
+                </div>
+                {/* After Count input replaced with Input */}
+                <div>
+                  <Input
+                    label="After Count"
+                    type="number"
+                    value={form.after}
+                    onChange={e => setForm({ ...form, after: e.target.value })}
+                    required
+                  />
+                </div>
+                {/* Consumed input replaced with Input */}
+                <div>
+                  <Input
+                    label="Consumed"
+                    type="number"
+                    value={form.used}
+                    onChange={e => setForm({ ...form, used: e.target.value })}
+                    required
+                  />
+                </div>
+                {/* Items Used input replaced with Input */}
                 <div style={{ gridColumn: '1 / span 2' }}>
-                  <label className="form-label">Items Used <span style={{color: 'red'}}>*</span></label>
-                  <input className="form-input" type="text" required value={form.items} onChange={e => setForm({ ...form, items: e.target.value })} />
+                  <Input
+                    label="Items Used"
+                    value={form.items}
+                    onChange={e => setForm({ ...form, items: e.target.value })}
+                    required
+                  />
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>

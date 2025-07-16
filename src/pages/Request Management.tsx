@@ -442,7 +442,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
           <div className="card mb-4">
             {/* Add Request Card content (move all content from the Add Request card here, remove flex/minWidth) */}
             <div className="card-header">
-              <h2 className="card-title flex items-center" style={{ fontWeight: 600, fontSize: '1.2rem' }}>
+              <h2 className="card-title flex items-center" style={{ fontWeight: 400, fontSize: '1rem' }}>
                 Add Request
               </h2>
             </div>

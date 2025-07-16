@@ -65,6 +65,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   const [machines, setMachines] = useState<Machine[]>(initialData.machines);
   const sterilizationMethods: SterilizationMethod[] = initialData.sterilizationMethods;
   const [availableRequests, setAvailableRequests] = useState<any[]>([]);
+  const [consumptionRecords, setConsumptionRecords] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showMachineStatusModal, setShowMachineStatusModal] = useState(false);
@@ -94,6 +95,11 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
         setAvailableRequests(approvedRequests);
       })
       .catch(() => setAvailableRequests([]));
+    // Fetch consumption records for Surgery IDs
+    fetch('http://192.168.50.95:3001/consumptionRecords')
+      .then(res => res.json())
+      .then(data => setConsumptionRecords(data))
+      .catch(() => setConsumptionRecords([]));
   }, []);
 
   // Auto-complete processes when duration is over
@@ -408,18 +414,24 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                         value={selectedRequestId}
                         onChange={e => setSelectedRequestId(e.target.value)}
                         options={[
-                          { label: "Select approved request ID", value: "" },
+                          { label: "Select approved request or surgery", value: "" },
+                          // Requests (pre-surgery)
                           ...availableRequests.map(req => ({
-                            label: `${req.requestId || req.id} - ${req.department} (${req.items})`,
+                            label: `REQ: ${req.requestId || req.id} - ${req.department} (${req.items})`,
                             value: req.requestId || req.id
+                          })),
+                          // Surgery IDs (post-surgery)
+                          ...consumptionRecords.map(rec => ({
+                            label: `SURG: ${rec.id} - ${rec.dept} (${rec.items})`,
+                            value: rec.id
                           }))
                         ]}
                         width="50%"
                       />
                    
                     {/* </div> */}
-                    {availableRequests.length === 0 && (
-                      <p className="text-sm text-gray-500 mt-1">No approved requests available. Approve a request in Receive Items first.</p>
+                    {availableRequests.length === 0 && consumptionRecords.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-1">No approved requests or completed surgeries available.</p>
                     )}
                 </div>
                 <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
