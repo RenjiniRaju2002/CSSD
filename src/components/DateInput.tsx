@@ -6,19 +6,24 @@ interface DateInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   width?: string | number;
+  min?: string;
 }
 
-const DateInput: React.FC<DateInputProps> = ({ label, value, onChange, width }) => (
-  <div className="dateinput-container">
-    <label className="form-label">{label}</label>
-    <input
-      className="form-control"
-      type="date"
-      value={value}
-      onChange={onChange}
-      style={width ? { width } : {}}
-    />
-  </div>
+const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
+  ({ label, value, onChange, width, min }, ref) => (
+    <div className="dateinput-container">
+      <label className="form-label">{label}</label>
+      <input
+        className="form-control"
+        type="date"
+        value={value}
+        onChange={onChange}
+        style={width ? { width } : {}}
+        ref={ref}
+        min={min}
+      />
+    </div>
+  )
 );
 
 export default DateInput; 

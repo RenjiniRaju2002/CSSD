@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import Stepper from '../components/Stepper';
 import DropInput from "../components/DropInput";
+import Breadcrumb from "../components/Breadcrumb";
 
 interface SterilizationProcessProps {
   sidebarCollapsed?: boolean;
@@ -72,11 +73,7 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   const [eyeHover, setEyeHover] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [lastStartedProcessId, setLastStartedProcessId] = useState<string | null>(null);
-  const stepLabels = [
-    'Start Sterilization',
-    'Active Processes',
-    'Available Items'
-  ];
+
 
   // Fetch sterilization processes from database
   useEffect(() => {
@@ -332,7 +329,8 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
           subtitle="Manage sterilization cycles and monitor progress" 
           className="sterilization-heading w-100" 
         />
-        <Stepper currentStep={currentStep} steps={stepLabels} />
+      <Breadcrumb steps={[{ label: 'Start Sterilization' }, { label: 'Active Processes' },{ label: 'Available Items' }]}
+       activeStep={currentStep} onStepClick={setCurrentStep}/>
         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6 mt-3">
           <Cards title="In Progress" subtitle={inProgressCount} />
           <Cards title="Completed Today" subtitle={completedTodayCount} />
@@ -373,8 +371,8 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
             </div>
             <div className="card-content">
               <form onSubmit={startSterilization}>
-                <div className="mb-4">
-                    {/* <label className="form-label">Select Machine <span style={{color: 'red'}}>*</span></label> */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1 }}>
                     <DropInput
                       label="Select Machine"
                       value={selectedMachine}
@@ -386,12 +384,10 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                           value: m.name
                         }))
                       ]}
-                      width="50%"
+                      width="100%"
                     />
-                    {/* </select> */}
-                </div>
-                <div className="mb-4">
-                    {/* <label className="form-label">Sterilization Method <span style={{color: 'red'}}>*</span></label> */}
+                  </div>
+                  <div style={{ flex: 1 }}>
                     <DropInput
                       label="Sterilization Method"
                       value={selectedProcess}
@@ -403,36 +399,30 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                           value: method.name
                         }))
                       ]}
-                      width="50%"
+                      width="100%"
                     />
-                </div>
-                <div className="mb-4">
-                    {/* <label className="form-label">Item/Request ID <span style={{color: 'red'}}>*</span></label> */}
-                    {/* <div className="flex gap-2"> */}
-                      <DropInput
-                        label="Item/Request ID"
-                        value={selectedRequestId}
-                        onChange={e => setSelectedRequestId(e.target.value)}
-                        options={[
-                          { label: "Select approved request or surgery", value: "" },
-                          // Requests (pre-surgery)
-                          ...availableRequests.map(req => ({
-                            label: `REQ: ${req.requestId || req.id} - ${req.department} (${req.items})`,
-                            value: req.requestId || req.id
-                          })),
-                          // Surgery IDs (post-surgery)
-                          ...consumptionRecords.map(rec => ({
-                            label: `SURG: ${rec.id} - ${rec.dept} (${rec.items})`,
-                            value: rec.id
-                          }))
-                        ]}
-                        width="50%"
-                      />
-                   
-                    {/* </div> */}
-                    {availableRequests.length === 0 && consumptionRecords.length === 0 && (
-                      <p className="text-sm text-gray-500 mt-1">No approved requests or completed surgeries available.</p>
-                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <DropInput
+                      label="Item/Request ID"
+                      value={selectedRequestId}
+                      onChange={e => setSelectedRequestId(e.target.value)}
+                      options={[
+                        { label: "Select approved request or surgery", value: "" },
+                        // Requests (pre-surgery)
+                        ...availableRequests.map(req => ({
+                          label: `REQ: ${req.requestId || req.id} - ${req.department} (${req.items})`,
+                          value: req.requestId || req.id
+                        })),
+                        // Surgery IDs (post-surgery)
+                        ...consumptionRecords.map(rec => ({
+                          label: `SURG: ${rec.id} - ${rec.dept} (${rec.items})`,
+                          value: rec.id
+                        }))
+                      ]}
+                      width="100%"
+                    />
+                  </div>
                 </div>
                 <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
                   Start Sterilization Process
@@ -509,26 +499,26 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
         {/* Machine Status Modal */}
         {showMachineStatusModal && (
           <div className="dialog-overlay">
-            <div className="dialog-content" style={{ maxWidth: '500px', width: '90%' }}>
-          <div className="card">
+            <div className="dialog-content" style={{ maxWidth: '500px', width: '90%', boxShadow: 'none' }}>
+              <div className="card" style={{ boxShadow: 'none' }}>
                 <div className="card-header flex items-center justify-between">
                   <span className="text-red-600 flex items-center"><AlertCircle className="mr-2" /> Machine Status</span>
                   <button className="text-gray-500 hover:text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center" onClick={() => setShowMachineStatusModal(false)} style={{ border: '1px solid #e5e7eb', boxShadow: 'none' }}>×</button>
-            </div>
-            <div className="card-content">
-              {machines.map(m => (
-                <div key={m.id} className="flex justify-between items-center mb-3">
-                  <span>{m.name}</span>
-                  <select className="form-input w-32" value={m.status} onChange={e => handleMachineStatusChange(m.id, e.target.value)}>
-                    <option value="Available">Available</option>
-                    <option value="In Use">In Use</option>
-                    <option value="Maintenance">Maintenance</option>
-                  </select>
                 </div>
-              ))}
+                <div className="card-content">
+                  {machines.map(m => (
+                    <div key={m.id} className="flex justify-between items-center mb-3">
+                      <span>{m.name}</span>
+                      <select className="form-input w-32" value={m.status} onChange={e => handleMachineStatusChange(m.id, e.target.value)}>
+                        <option value="Available">Available</option>
+                        <option value="In Use">In Use</option>
+                        <option value="Maintenance">Maintenance</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
           </div>
         )}
       </PageContainer>

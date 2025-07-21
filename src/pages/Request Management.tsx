@@ -17,6 +17,9 @@ import Stepper from '../components/Stepper';
 import Input from "../components/Input";
 import DropInput from "../components/DropInput";
 import DateInput from "../components/DateInput";
+import Breadcrumb from "../components/Breadcrumb";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Request {
   id: string;
@@ -64,11 +67,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [selectedKit, setSelectedKit] = useState<any>(null);
   const [showKitDetails, setShowKitDetails] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const stepLabels = [
-    'Add Item Request',
-    'Review Request',
-    
-  ];
 
   // Check if form has unsaved data
   const hasUnsavedData = () => {
@@ -126,7 +124,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     
     if (!selectedDepartment) missingFields.push("Outlet");
     if (!selectedPriority) missingFields.push("Priority");
-    if (!requestedBy) missingFields.push("Requested By");
     if (!itemInput) missingFields.push("Item/Kit");
     if (!itemQuantity) missingFields.push("Quantity");
     if (!selectedDate) missingFields.push("Required Date");
@@ -145,7 +142,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     if (!kitName) missingFields.push("Kit Name");
     if (!kitDepartment) missingFields.push("Outlet");
     if (!kitPriority) missingFields.push("Priority");
-    if (!kitRequestedBy) missingFields.push("Requested By");
     if (!kitItemName) missingFields.push("Item/Kit");
     if (!kitItemQuantity) missingFields.push("Quantity");
     
@@ -307,6 +303,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     // Clear form data after successful save
     clearFormData();
     setCurrentStep(1); // Move to step 2 after successful save
+    toast.success('Request created');
   };
 
   const handleViewRequest = (request: any) => {
@@ -423,6 +420,34 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     });
   };
 
+  const handleAddRequestItem = () => {
+    if (!selectedDepartment) {
+      alert('Please enter Outlet');
+      // departmentRef.current?.focus(); // This line was not in the original file, so it's removed.
+      return;
+    }
+    if (!selectedPriority) {
+      alert('Please enter Priority');
+      // priorityRef.current?.focus(); // This line was not in the original file, so it's removed.
+      return;
+    }
+    if (!itemInput) {
+      alert('Please enter Item/Kit');
+      // itemInputRef.current?.focus(); // This line was not in the original file, so it's removed.
+      return;
+    }
+    if (!itemQuantity) {
+      alert('Please enter Quantity');
+      // itemQuantityRef.current?.focus(); // This line was not in the original file, so it's removed.
+      return;
+    }
+    if (!selectedDate) {
+      alert('Please enter Required Date');
+      // dateInputRef.current?.focus(); // This line was not in the original file, so it's removed.
+      return;
+    }
+    addItemToList();
+  };
   return (
     <>
     <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator />
@@ -434,7 +459,9 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
        
       </div> */}
        <SectionHeading title="Request Management" subtitle="Create and manage sterilization requests" className="requestmanagement-heading w-100" />
-       <Stepper currentStep={currentStep} steps={stepLabels} />
+       {/* <Stepper currentStep={currentStep} steps={stepLabels} /> */}
+       <Breadcrumb steps={[{ label: 'Add Request' }, { label: 'Review Request' }]}
+       activeStep={currentStep} onStepClick={setCurrentStep}/>
 
       {/* Step 1: Add Request and Package Kits */}
       {currentStep === 0 && (
@@ -448,8 +475,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             </div>
             <div className="card-content">
               <form onSubmit={handleSaveRequest}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                    <div>
+                <div style={{display:"flex",gap:'10px'}}>
+                    <div style={{flex:1}}>
                       {/* <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label> */}
                       <DropInput
                         label="Outlet"
@@ -462,10 +489,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                           { label: "Orthopedics", value: "Orthopedics" }
                         ]}
                       
-                        width="50%"
+                        // width="70%"
                       />
                     </div>
-                    <div>
+                    <div style={{flex:1}}>
                       {/* <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label> */}
                       <DropInput
                         label="Priority"
@@ -478,21 +505,11 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                           { label: "Low", value: "Low" }
                         ]}
                       
-                        width="50%"
+                        // width="70%"
                       />
                     </div>
-                    <div>
-                      {/* <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
-                      <input
-                        type="text"
-                        placeholder="Enter requester name"
-                        value={requestedBy}
-                        onChange={(e) => setRequestedBy(e.target.value)}
-                        required
-                      /> */}
-                      <Input label="Requested By" type="text" placeholder="Enter requester name" value={requestedBy} onChange={(e) => setRequestedBy(e.target.value)} required  width={'50%'}/>
-                    </div>
-                    <div className="md:col-span-2">
+                 
+                    <div style={{flex:1}}>
                       <Input
                         label="Item /Kit"
                         type="text"
@@ -500,10 +517,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         value={itemInput}
                         onChange={(e) => setItemInput(e.target.value)}
                         required
-                        width={'50%'}
+                        // width={'70%'}
                       />
                     </div>  
-                      <div>
+                      <div style={{flex:1}}>
                           <Input
                             label="Quantity"
                             type="number"
@@ -512,10 +529,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                             value={itemQuantity}
                             onChange={(e) => setItemQuantity(e.target.value)}
                             required
-                            width={'50%'}
+                            // width={'70%'}
                           />
                       </div>
-                      <div>
+                      <div style={{flex:1}}>
                         {/* <label className="form-label">Required Date <span style={{color: 'red'}}></span></label> */}
                         <DateInput
                           label="Required date"
@@ -523,8 +540,9 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                           // className="form-input"
                           value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
                           onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
+                          min={new Date().toISOString().split('T')[0]}
                           // required
-                          width={'50%'}
+                          // width={'70%'}
                         />
                       </div>
                 </div>
@@ -543,12 +561,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
               </form>
               {pendingItems.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="mb-2" style={{ fontWeight: 600, fontSize: '1.2rem' }}>Requests to be Added</h3>
                   <Table
                     columns={[
                       { key: 'department', header: 'Department' },
                       { key: 'priority', header: 'Priority' },
-                      { key: 'requestedBy', header: 'Requested By' },
                       { key: 'item', header: 'Item' },
                       { key: 'quantity', header: 'Quantity' },
                       { key: 'date', header: 'Date' }
@@ -589,8 +605,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
               </ButtonWithGradient>
             </div>
             <div className="card-content">
-              <div className="flex justify-end">
-                <div className="search ml-auto">
+              <div className="flex justify-end" >
+                <div className="search ml-auto ">
                   <Searchbar value={kitSearchTerm} onChange={e => setKitSearchTerm(e.target.value)} />
                 </div>
               </div>
@@ -652,26 +668,27 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             <div className="card-content">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex gap-2">
-                  <select 
-                    className="form-input text-sm"
+                  <DropInput
+                    label="Status"
                     value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="requested">Requested</option>
-                    <option value="in progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                  <select 
-                    className="form-input text-sm"
+                    onChange={e => setFilterStatus(e.target.value)}
+                    options={[
+                      { value: "all", label: "All Status" },
+                      { value: "requested", label: "Requested" },
+                      { value: "Approved", label: "Approved" }
+                    ]}
+                  />
+                  <DropInput
+                    label="Priority"
                     value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                  >
-                    <option value="all">All Priorities</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
+                    onChange={e => setFilterPriority(e.target.value)}
+                    options={[
+                      { value: "all", label: "All Priorities" },
+                      { value: "high", label: "High" },
+                      { value: "medium", label: "Medium" },
+                      { value: "low", label: "Low" }
+                    ]}
+                  />
                 </div>
                 <div className="relative flex-1 max-w-md ml-auto">
                   <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -681,7 +698,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                 columns={[
                   { key: 'id', header: 'Request ID' },
                   { key: 'department', header: 'Department' },
-                  { key: 'requestedBy', header: 'Requested By' },
                   { key: 'items', header: 'Items' },
                   { key: 'quantity', header: 'Quantity' },
                   { key: 'priority', header: 'Priority' },
@@ -720,8 +736,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       {/* Create Kit Dialog */}
       {showCreateKit && (
         <div className="dialog-overlay">
-          <div className="dialog-content" style={{ maxWidth: '600px', width: '60%', boxShadow: 'none' }}>
-            <div className="card" style={{ boxShadow: 'none' }}>
+          <div className="dialog-content" style={{ maxWidth: '600px', width: '60%', minHeight: '450px', height: '700px', boxShadow: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="card" style={{ boxShadow: 'none', width: '100%' }}>
               <div className="card-header flex items-center justify-between">
                 <h2 className="card-title">Create Package Kit</h2>
                 <button 
@@ -734,101 +750,74 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
               </div>
               <div className="card-content">
                 <form onSubmit={(e) => e.preventDefault()}>
-                  <div className="form-group mb-4">
-                    <label className="form-label">Kit Name <span style={{color: 'red'}}>*</span></label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                        value={kitName} 
-                      onChange={(e) => setKitName(e.target.value)}
-                        placeholder="Enter kit name" 
-                        required 
-                      style={{ boxShadow: 'none' }}
-                      />
-                    </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                      <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label>
-                      <select 
-                        className="form-input"
+                    <div>
+                      <Input
+                        label="Kit Name"
+                        value={kitName}
+                        onChange={e => setKitName(e.target.value)}
+                        placeholder="Enter kit name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <DropInput
+                        label="Outlet"
                         value={kitDepartment}
-                        onChange={(e) => setKitDepartment(e.target.value)}
-                        required
-                        style={{ boxShadow: 'none' }}
-                      >
-                        <option value="">Select department</option>
-                        <option value="OR-2">OR-2</option>
-                        <option value="Cardiology">Cardiology</option>
-                        <option value="Neurology">Neurology</option>
-                        <option value="Orthopedics">Orthopedics</option>
-                      </select>
-                      </div>
-
-                      <div>
-                      <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label>
-                      <select 
-                        className="form-input"
+                        onChange={e => setKitDepartment(e.target.value)}
+                        options={[
+                          { label: "Select outlet", value: "" },
+                          { label: "OR-2", value: "OR-2" },
+                          { label: "Cardiology", value: "Cardiology" },
+                          { label: "Neurology", value: "Neurology" },
+                          { label: "Orthopedics", value: "Orthopedics" }
+                        ]}
+                        width="100%"
+                      />
+                    </div>
+                    <div>
+                      <DropInput
+                        label="Priority"
                         value={kitPriority}
-                        onChange={(e) => setKitPriority(e.target.value)}
+                        onChange={e => setKitPriority(e.target.value)}
+                        options={[
+                          { label: "Select priority", value: "" },
+                          { label: "High", value: "High" },
+                          { label: "Medium", value: "Medium" },
+                          { label: "Low", value: "Low" }
+                        ]}
+                        width="100%"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Item/Kit"
+                        value={kitItemName}
+                        onChange={e => setKitItemName(e.target.value)}
+                        placeholder="Add item name"
                         required
-                        style={{ boxShadow: 'none' }}
-                      >
-                        <option value="">Select priority</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </select>
-                      </div>
-                      <div>
-                      <label className="form-label">Requested By <span style={{color: 'red'}}>*</span></label>
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        value={kitRequestedBy}
-                        onChange={(e) => setKitRequestedBy(e.target.value)}
-                        placeholder="Enter requester name" 
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Quantity"
+                        type="number"
+                        value={kitItemQuantity}
+                        onChange={e => setKitItemQuantity(e.target.value)}
+                        placeholder="Enter quantity"
                         required
-                        style={{ boxShadow: 'none' }}
-                      />
-                      </div>
-                    </div>
-
-                  <div className="mb-4">
-                    <label className="form-label">Item/Kit <span style={{color: 'red'}}>*</span></label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      value={kitItemName}
-                      onChange={(e) => setKitItemName(e.target.value)}
-                        placeholder="Add item name" 
-                      style={{ boxShadow: 'none' }}
                       />
                     </div>
-
-                  <div className="mb-4">
-                    <label className="form-label">Quantity <span style={{color: 'red'}}>*</span></label>
-                    <input 
-                        type="number" 
-                      className="form-input" 
-                      value={kitItemQuantity}
-                      onChange={(e) => setKitItemQuantity(e.target.value)}
-                        placeholder="Enter quantity" 
-                      min="1"
-                      style={{ boxShadow: 'none' }}
-                      />
-                    </div>
-
+                  </div>
                   <ButtonWithGradient
                     type="button"
                     className="button-gradient w-100"
                     onClick={handleAddKitItem}
-                    disabled={!kitItemName || !kitItemQuantity || !kitDepartment || !kitPriority || !kitRequestedBy}
+                    disabled={!kitItemName || !kitItemQuantity || !kitDepartment || !kitPriority}
                   >
-                      Add Item
+                    Add Item
                   </ButtonWithGradient>
-                  </form>
-                  
+                </form>
                 {kitItems.length > 0 && (
                   <div className="mt-6">
                     <h3 className="mb-2" style={{ fontWeight: 600, fontSize: '1.2rem' }}>Kit Items to be Added</h3>
@@ -836,7 +825,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                       columns={[
                         { key: 'department', header: 'Department' },
                         { key: 'priority', header: 'Priority' },
-                        { key: 'requestedBy', header: 'Requested By' },
                         { key: 'item', header: 'Item' },
                         { key: 'quantity', header: 'Quantity' }
                       ]}
@@ -848,23 +836,23 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         className="btn btn-secondary bg-white"
                         style={{ border: '1px solid #e5e7eb', boxShadow: 'none' }}
                         onClick={clearKitFormData}
-                        >
-                          Clear All
+                      >
+                        Clear All
                       </button>
                       <ButtonWithGradient
                         type="button"
                         className="button-gradient"
                         onClick={handleSaveKit}
-                        >
-                          Save Kit
+                      >
+                        Save Kit
                       </ButtonWithGradient>
-                      </div>
                     </div>
-                  )}
+                  </div>
+                )}
+              </div>
             </div>
-                </div>
-                        </div>
-                      </div>
+          </div>
+        </div>
       )}
 
 
@@ -892,10 +880,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     <h3 className="text-sm font-medium text-gray-500">Department</h3>
                     <p>{selectedRequest.department}</p>
                   </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Requested By</h3>
-                    <p>{selectedRequest.requestedBy}</p>
-                  </div>
+                
                 <div>
                     <h3 className="text-sm font-medium text-gray-500">Items</h3>
                     <p>{selectedRequest.items}</p>
@@ -939,10 +924,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       {/* Kit Details Dialog */}
       {showKitDetails && selectedKit && (
         <div className="dialog-overlay">
-          <div className="dialog-content" style={{ maxWidth: '600px', width: '90%', boxShadow: 'none' }}>
-            <div className="card" style={{ boxShadow: 'none' }}>
-              <div className="card-header flex items-center justify-between">
-                <h2 className="card-title">Kit Details</h2>
+          <div className="dialog-content" style={{ maxWidth: '500px', width: '60%', boxShadow: 'none' }}>
+            <div className="card" style={{ boxShadow: 'none', padding: '28px 32px', background: '#fff', borderRadius: '10px', border: '1.5px solid #e5e7eb' }}>
+              <div className="card-header flex items-center justify-between" style={{ borderBottom: '1px solid #e5e7eb', marginBottom: 18 }}>
+                <h2 className="card-title" style={{ fontWeight: 600, fontSize: '1.2rem', color: 'black', letterSpacing: '0.5px',marginBottom: 18  }}>Kit Details</h2>
                 <button 
                   className="text-gray-500 hover:text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center"
                   onClick={() => setShowKitDetails(false)}
@@ -951,54 +936,49 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   ×
                 </button>
               </div>
-              <div className="card-content">
-            <div className="space-y-4">
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Kit ID</h3>
-                    <p>{selectedKit.id}</p>
-                </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Kit Name</h3>
-                    <p>{selectedKit.name}</p>
-                </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Department</h3>
-                    <p>{selectedKit.department}</p>
-                </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Requested By</h3>
-                    <p>{selectedKit.requestedBy}</p>
-                </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Items</h3>
-                    <p>{selectedKit.items}</p>
-                </div>
+              <div className="card-content" style={{ padding: 0 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px 24px', marginBottom: 18 }}>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">Quantity</h3>
-                    <p>{selectedKit.quantity}</p>
-              </div>
-              <div>
-                    <h3 className="text-sm font-medium text-gray-500">Priority</h3>
-                    <p>{selectedKit.priority}</p>
-              </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                    <p>{selectedKit.status}</p>
-                </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Date Created</h3>
-                    <p>{selectedKit.date}</p>
-                </div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Kit ID</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.id}</div>
+                  </div>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500">Time Created</h3>
-                    <p>{selectedKit.time}</p>
-              </div>
-            </div>
-
-                <div className="flex justify-end mt-6">
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Kit Name</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.name}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Outlet</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.department}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Priority</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.priority}</div>
+                  </div>
+                  <div style={{ gridColumn: '1 / span 2' }}>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Items</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.items}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Quantity</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.quantity}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Status</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.status}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Date Created</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.date}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Time Created</div>
+                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.time}</div>
+                  </div>
+                </div>
+                <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 18, paddingTop: 18, textAlign: 'right' }}>
                   <button 
                     className="btn btn-primary"
-                    style={{ background: '#0097a7', color: '#fff', fontWeight: 500 }}
+                    style={{ background: '#0097a7', color: '#fff', fontWeight: 500, minWidth: 90 }}
                     onClick={() => setShowKitDetails(false)}
                   >
                     Close
@@ -1012,6 +992,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     </PageContainer>
     {/* </div> */}
     <Footer/>
+    <ToastContainer position="top-right" autoClose={3000} />
     </>
   );
 };

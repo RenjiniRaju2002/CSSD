@@ -7,7 +7,7 @@
       "quantity": 4,
       "priority": "High",
       "requestedBy": "Anjali",
-      "status": "Requested",
+      "status": "Approved",
       "date": "2025-07-02",
       "time": "01:53 pm"
     },
@@ -65,6 +65,28 @@
       "status": "Approved",
       "date": "2025-07-15",
       "time": "04:29 pm"
+    },
+    {
+      "id": "REQ007",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 5,
+      "priority": "Medium",
+      "requestedBy": "Neenu",
+      "status": "Approved",
+      "date": "2025-07-09",
+      "time": "11:44 am"
+    },
+    {
+      "id": "REQ008",
+      "department": "Cardiology",
+      "items": "wswww",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Requested",
+      "date": "2025-07-21",
+      "time": "04:59 PM"
     }
   ],
   "receive_items": [
@@ -76,7 +98,7 @@
       "quantity": 4,
       "priority": "High",
       "requestedBy": "Anjali",
-      "status": "Pending",
+      "status": "Approved",
       "date": "2025-07-02",
       "time": "01:53 pm",
       "receivedDate": "2025-07-02",
@@ -151,6 +173,34 @@
       "time": "04:29 pm",
       "receivedDate": "2025-07-15",
       "receivedTime": "04:29 pm"
+    },
+    {
+      "id": "REC007",
+      "requestId": "REQ007",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 5,
+      "priority": "Medium",
+      "requestedBy": "Neenu",
+      "status": "Approved",
+      "date": "2025-07-09",
+      "time": "11:44 am",
+      "receivedDate": "2025-07-09",
+      "receivedTime": "11:44 am"
+    },
+    {
+      "id": "REC008",
+      "requestId": "REQ008",
+      "department": "Cardiology",
+      "items": "wswww",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Pending",
+      "date": "2025-07-21",
+      "time": "04:59 PM",
+      "receivedDate": "2025-07-21",
+      "receivedTime": "04:59 PM"
     }
   ],
   "stockItems": [
@@ -302,6 +352,26 @@
       "endTime": "16:30",
       "status": "Completed",
       "duration": 45
+    },
+    {
+      "id": "STE013",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization",
+      "itemId": "REQ007",
+      "startTime": "11:44",
+      "endTime": "12:59",
+      "status": "Completed",
+      "duration": 75
+    },
+    {
+      "id": "STE014",
+      "machine": "Autoclave-1",
+      "process": "Steam Sterilization",
+      "itemId": "REQ005",
+      "startTime": "17:17",
+      "endTime": "17:17",
+      "status": "Completed",
+      "duration": 45
     }
   ],
   "availableItems": [
@@ -322,21 +392,10 @@
       "items": "scissors",
       "quantity": 6,
       "status": "Sterilized",
-      "readyTime": "12:15",
-      "sterilizationId": "STE010",
-      "machine": "Autoclave-3",
+      "readyTime": "17:17",
+      "sterilizationId": "STE014",
+      "machine": "Autoclave-1",
       "process": "Steam Sterilization"
-    },
-    {
-      "id": "REQ002",
-      "department": "Neurology",
-      "items": "scissors, forcaps",
-      "quantity": 9,
-      "status": "Sterilized",
-      "readyTime": "16:06",
-      "sterilizationId": "STE001",
-      "machine": "Autoclave-2",
-      "process": "Chemical Sterilization"
     },
     {
       "id": "REQ006",
@@ -348,6 +407,28 @@
       "sterilizationId": "STE012",
       "machine": "Autoclave-2",
       "process": "Steam Sterilization"
+    },
+    {
+      "id": "REQ007",
+      "department": "Cardiology",
+      "items": "scissors",
+      "quantity": 5,
+      "status": "Sterilized",
+      "readyTime": "12:59",
+      "sterilizationId": "STE013",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization"
+    },
+    {
+      "id": "REQ002",
+      "department": "Neurology",
+      "items": "scissors, forcaps",
+      "quantity": 9,
+      "status": "Sterilized",
+      "readyTime": "18:02",
+      "sterilizationId": "STE001",
+      "machine": "Autoclave-2",
+      "process": "Chemical Sterilization"
     }
   ],
   "createdKits": [
@@ -424,6 +505,34 @@
       "quantity": 4,
       "issuedTime": "14:41",
       "issuedDate": "2025-07-15",
+      "status": "Issued (Non-Sterilized)"
+    },
+    {
+      "id": "ISS005",
+      "requestId": "REQ002",
+      "department": "OR-2",
+      "items": "scissors, forcaps",
+      "quantity": 9,
+      "issuedTime": "17:18",
+      "issuedDate": "2025-07-18",
+      "status": "Issued"
+    },
+    {
+      "id": "ISS006",
+      "department": "",
+      "items": "Requested Item",
+      "quantity": 1,
+      "issuedTime": "14:23",
+      "issuedDate": "2025-07-21",
+      "status": "Issued (Non-Sterilized)"
+    },
+    {
+      "id": "ISS007",
+      "department": "",
+      "items": "Requested Item",
+      "quantity": 1,
+      "issuedTime": "14:23",
+      "issuedDate": "2025-07-21",
       "status": "Issued (Non-Sterilized)"
     }
   ],

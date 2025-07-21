@@ -13,11 +13,13 @@ import ButtonWithGradient from "../components/ButtonWithGradient";
 import SectionHeading from "../components/SectionHeading";
 import ApproveBtn from '../components/Approvebtn';
 import RejectButton from '../components/Rejectbtn';
+import DropInput from "../components/DropInput";
+import DateInput from "../components/DateInput";
 
 interface RequestItem {
   id: string;
   requestId?: string;
-  department: string;
+  outlet: string;
   items: string;
   quantity: number;
   priority: string;
@@ -57,7 +59,8 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const [requestedItems, setRequestedItems] = useState<RequestItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -73,7 +76,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   const filteredItems = sortedItems.filter((item) => {
     const matchesSearch =
       item.requestId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.outlet?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.items?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.requestedBy?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -81,11 +84,16 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
       statusFilter === "all" ||
       item.status?.toLowerCase() === statusFilter.toLowerCase();
 
-    const matchesPriority =
-      priorityFilter === "all" ||
-      item.priority?.toLowerCase() === priorityFilter.toLowerCase();
+    // Date filter
+    let matchesDate = true;
+    if (dateFrom) {
+      matchesDate = matchesDate && new Date(item.date) >= new Date(dateFrom);
+    }
+    if (dateTo) {
+      matchesDate = matchesDate && new Date(item.date) <= new Date(dateTo);
+    }
 
-    return matchesSearch && matchesStatus && matchesPriority;
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const handleStatusUpdate = async (itemId: string, newStatus: string) => {
@@ -129,26 +137,35 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
           <div className="card-content">
             <div className="flex justify-between items-center mb-4">
               <div className="flex gap-2">
-                <select
+                
+                <DateInput
+                  label="From Date"
+                  value={dateFrom}
+                  onChange={setDateFrom}
+                  style={{ minWidth: 120 }}
                   className="form-input text-sm"
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                <DateInput
+                  label="To Date"
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
+                  style={{ minWidth: 120 }}
+                  className="form-input text-sm"
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                <DropInput
+                  className="form-input text-sm" 
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-                <select
-                  className="form-input text-sm"
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: "all", label: "All Status" },
+                    { value: "pending", label: "Requested" },
+                    { value: "approved", label: "Approved" },
+                   
+                  ]}
+                  placeholder="Select Status"
+                />
               </div>
               <div className="relative flex-1 max-w-md ml-auto">
                 <Searchbar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />

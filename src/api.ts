@@ -3,7 +3,7 @@ const getBaseURL = (): string => {
   // Check if we're in development or production
   if (import.meta.env.DEV) {
       // In development, use network IP for cross-system access
-      return 'http://192.168.50.95:4000';
+      return 'http://192.168.50.95:3001';
       // return 'http://localhost:4000';
   } else {
     // In production, use the actual server URL

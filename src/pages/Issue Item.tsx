@@ -14,6 +14,7 @@ import Cards from "../components/Cards";
 import SectionHeading from "../components/SectionHeading";
 import Pagination from "../components/Pagination";
 import Stepper from "../components/Stepper";
+import Breadcrumb from "../components/Breadcrumb";
 
 interface AvailableItem {
   id: string;
@@ -45,10 +46,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   const [availablePage, setAvailablePage] = useState(1);
   const [availableRowsPerPage, setAvailableRowsPerPage] = useState(5);
   const [currentStep, setCurrentStep] = useState(0);
-  const stepLabels = [
-    "Issue Items",
-    "Issue History"
-  ];
+  
 
   // Fetch issued items from backend
   const fetchIssuedItems = async () => {
@@ -358,7 +356,8 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
           subtitle={currentStep === 0 ? "Issue sterilized items to departments and outlets" : "View all issued items"}
           className="Issueitem-heading w-100" 
         />
-        <Stepper currentStep={currentStep} steps={stepLabels} />
+         <Breadcrumb steps={[{ label: 'Issue Items' }, { label: 'Issue History' }]}
+       activeStep={currentStep} onStepClick={setCurrentStep}/>
         {error && (
           <div className="error-message" style={{
             backgroundColor: '#fee',
@@ -386,14 +385,12 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
         </div>
             <div className="issue-card-content">
               <form onSubmit={handleIssueItem} className="form-grid">
-                {/* <div className="form-group"> */}
-                      {/* <label className="form-label" htmlFor="requestId">Request ID <span style={{color: 'red'}}>*</span></label> */}
-                      {/* <div className="flex gap-2"> */}
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <DropInput
                     label="Request ID"
                     value={selectedRequestId}
                     onChange={(e) => setSelectedRequestId(e.target.value)}
-                    width={'50%'}
+                    width={'250px'}
                     options={[
                       { label: "Select sterilized item to issue", value: "" },
                       ...Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
@@ -418,57 +415,39 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
                       })
                     ]}
                   />
-                      {/* </div> */}
-                {/* </div> */}
-                {/* <div className="form-group"> */}
-                      {/* <label className="form-label" htmlFor="outlet">Department/Outlet <span style={{color: 'red'}}>*</span></label>
-                  <select
-                    id="outlet"
-                    name="outlet"
-                    className="form-input"
+                  <DropInput 
+                    label="Outlet" 
                     value={selectedOutlet}
                     onChange={(e) => setSelectedOutlet(e.target.value)}
-                    required
-                  >
-                    <option value="">Select destination</option>
-                    <option value="OR-1">Operating Room 1</option>
-                    <option value="OR-2">Operating Room 2</option>
-                    <option value="ICU">ICU</option>
-                  </select> */}
-                  <DropInput label="Department/Outlet" value={selectedOutlet}
-                    onChange={(e) => setSelectedOutlet(e.target.value)}
-                    width={'50%'}
+                    width={'200px'}
                     options={[
                       {label:'Operating Room 1',value:'OR-1'},
                       {label:'Operating Room 2',value:'OR-2'},
                       {label:'ICU',value:'ICU'},
-                    ]}/>
-                {/* </div> */}
-                <div className="form-row" style={{display:"flex"}}>
-                  <Input label="Issue Item" type="text" value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })} width={'250px'}/>
-                    {/* <label className="form-label">Issue Time</label>
-                    <input
-                      className="form-input"
-                      type="text"
-                      value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })}
-                      readOnly
-                    /> */}
-                    <Input type="text" label="Issue Date" value={new Date().toISOString().split("T")[0]} width={'250px'}/>
-                    {/* <label className="form-label">Issue Date</label>
-                    <input
-                      className="form-input"
-                      type="text"
-                      value={new Date().toISOString().split("T")[0]}
-                      readOnly
-                    /> */}
-                </div>
+                    ]}
+                  />
+                  <Input 
+                    label="Issue Time" 
+                    type="text" 
+                    value={new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" })} 
+                    width={'150px'}
+                  />
+                  <Input 
+                    type="text" 
+                    label="Issue Date" 
+                    value={new Date().toISOString().split("T")[0]} 
+                    width={'150px'}
+                  />
+                  <div style={{ display: 'flex', alignContent:'center',alignItems:'center'}}>
                     <ButtonWithGradient
                       type="submit"
-                      className="button-gradient w-full"
+                      className="button-gradient"
                       disabled={!selectedRequestId || !selectedOutlet || loading}
                     >
                       {loading ? "Issuing..." : "Issue Item"}
-                </ButtonWithGradient>
+                    </ButtonWithGradient>
+                  </div>
+                </div>
               </form>
             </div>
           </div>
