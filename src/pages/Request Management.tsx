@@ -27,7 +27,6 @@ interface Request {
   items: string;
   quantity: number;
   priority: string;
-  requestedBy: string;
   status: string;
   date: string;
   time: string;
@@ -67,6 +66,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   const [selectedKit, setSelectedKit] = useState<any>(null);
   const [showKitDetails, setShowKitDetails] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
 
   // Check if form has unsaved data
   const hasUnsavedData = () => {
@@ -173,8 +174,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   //   localStorage.setItem('cssd_kits', JSON.stringify(createdKits));
   // }, [createdKits]);
 
-  // Sort requests in ascending order by ID before slicing for pagination
-  const sortedRequests = [...requests].sort((a, b) => a.id.localeCompare(b.id));
+  // Sort requests in descending order by ID to show most recent first
+  const sortedRequests = [...requests].sort((a, b) => b.id.localeCompare(a.id));
   const filteredRequests = sortedRequests.filter((req) => {
     const matchesSearch =
       req.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -189,7 +190,11 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       filterPriority === "all" ||
       req.priority?.toLowerCase() === filterPriority.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesPriority;
+    const matchesDateRange =
+      (!fromDate || req.date >= fromDate) &&
+      (!toDate || req.date <= toDate);
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesDateRange;
   });
 
   // Handlers
@@ -418,6 +423,19 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
     });
+
+    // Show toast message when status is updated to 'Completed'
+    if (newStatus === 'Completed') {
+      toast.success('Sterilization completed successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    }
   };
 
   const handleAddRequestItem = () => {
@@ -468,7 +486,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         <div className="mb-4">
           <div className="card mb-4">
             {/* Add Request Card content (move all content from the Add Request card here, remove flex/minWidth) */}
-            <div className="card-header">
+            <div className="card-header" >
               <h2 className="card-title flex items-center" style={{ fontWeight: 400, fontSize: '1rem' }}>
                 Add Request
               </h2>
@@ -483,7 +501,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         value={selectedDepartment}
                         onChange={e => setSelectedDepartment(e.target.value)}
                         options={[
-                          { label: "Select outlet", value: "" },
+                          { label: "Select outlet", value: "select outlet" },
                           { label: "Cardiology", value: "Cardiology" },
                           { label: "Neurology", value: "Neurology" },
                           { label: "Orthopedics", value: "Orthopedics" }
@@ -667,7 +685,30 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             </div>
             <div className="card-content">
               <div className="flex justify-between items-center mb-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  {/* Date Range Filters */}
+                  <div className="flex flex-col">
+                    
+                    <DateInput
+                      label="From Date"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                      width="180px"
+                      max={toDate || format(new Date(), 'yyyy-MM-dd')}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    
+                    <DateInput
+                      label="To Date"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                      width="180px"
+                      min={fromDate}
+                      max={format(new Date(), 'yyyy-MM-dd')}
+                    />
+                  </div>
+                  
                   <DropInput
                     label="Status"
                     value={filterStatus}
@@ -724,8 +765,9 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             </ButtonWithGradient>
             <ButtonWithGradient
               type="button"
-              className="button-gradient"
-              onClick={() => setCurrentStep(1)}
+              className={`button-gradient ${currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => currentStep < 1 && setCurrentStep(1)}
+              disabled={currentStep === 1}
             >
               Next
             </ButtonWithGradient>
@@ -736,7 +778,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       {/* Create Kit Dialog */}
       {showCreateKit && (
         <div className="dialog-overlay">
-          <div className="dialog-content" style={{ maxWidth: '600px', width: '60%', minHeight: '450px', height: '700px', boxShadow: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="dialog-content" style={{ maxWidth: '800px', width: '80%', minHeight: '600px', boxShadow: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
             <div className="card" style={{ boxShadow: 'none', width: '100%' }}>
               <div className="card-header flex items-center justify-between">
                 <h2 className="card-title">Create Package Kit</h2>
@@ -754,10 +796,10 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     <div>
                       <Input
                         label="Kit Name"
-                        value={kitName}
+                        value={kitName} 
                         onChange={e => setKitName(e.target.value)}
-                        placeholder="Enter kit name"
-                        required
+                        placeholder="Enter kit name" 
+                        required 
                       />
                     </div>
                     <div>
@@ -789,44 +831,45 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         width="100%"
                       />
                     </div>
+                   
                     <div>
                       <Input
                         label="Item/Kit"
                         value={kitItemName}
                         onChange={e => setKitItemName(e.target.value)}
-                        placeholder="Add item name"
+                        placeholder="Add item name" 
                         required
                       />
                     </div>
                     <div>
                       <Input
                         label="Quantity"
-                        type="number"
+                        type="number" 
                         value={kitItemQuantity}
                         onChange={e => setKitItemQuantity(e.target.value)}
-                        placeholder="Enter quantity"
+                        placeholder="Enter quantity" 
                         required
                       />
                     </div>
                   </div>
                   <ButtonWithGradient
                     type="button"
-                    className="button-gradient w-100"
                     onClick={handleAddKitItem}
                     disabled={!kitItemName || !kitItemQuantity || !kitDepartment || !kitPriority}
                   >
                     Add Item
                   </ButtonWithGradient>
                 </form>
+                
                 {kitItems.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="mb-2" style={{ fontWeight: 600, fontSize: '1.2rem' }}>Kit Items to be Added</h3>
+                   
                     <Table
                       columns={[
-                        { key: 'department', header: 'Department' },
-                        { key: 'priority', header: 'Priority' },
                         { key: 'item', header: 'Item' },
-                        { key: 'quantity', header: 'Quantity' }
+                        { key: 'quantity', header: 'Quantity' },
+                        { key: 'priority', header: 'Priority' },
+                        { key: 'department', header: 'Department' }
                       ]}
                       data={kitItems}
                     />
@@ -843,6 +886,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                         type="button"
                         className="button-gradient"
                         onClick={handleSaveKit}
+                        disabled={!kitName || kitItems.length === 0}
                       >
                         Save Kit
                       </ButtonWithGradient>
@@ -855,134 +899,62 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         </div>
       )}
 
-
-      {/* Request Details Dialog */}
-      {showRequestDetails && selectedRequest && (
-        <div className="dialog-overlay">
-          <div className="dialog-content">
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">Request Details</h2>
-                <button 
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={() => setShowRequestDetails(false)}
-                >
-                  &times;
-                </button>
-                      </div>
-              <div className="card-content">
-            <div className="space-y-4">
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Request ID</h3>
-                    <p>{selectedRequest.id}</p>
-                    </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Department</h3>
-                    <p>{selectedRequest.department}</p>
-                  </div>
-                
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Items</h3>
-                    <p>{selectedRequest.items}</p>
-            </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Quantity</h3>
-                    <p>{selectedRequest.quantity}</p>
-      </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Priority</h3>
-                    <p>{selectedRequest.priority}</p>
-            </div>
-              <div>
-                    <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                    <p>{selectedRequest.status}</p>
-          </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Date</h3>
-                    <p>{selectedRequest.date}</p>
-          </div>
-                <div>
-                    <h3 className="text-sm font-medium text-gray-500">Time</h3>
-                    <p>{selectedRequest.time}</p>
-              </div>
-                </div>
-                
-                <div className="flex justify-end mt-6">
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setShowRequestDetails(false)}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-                </div>
-              </div>
-            </div>
-          )}
-
       {/* Kit Details Dialog */}
       {showKitDetails && selectedKit && (
         <div className="dialog-overlay">
-          <div className="dialog-content" style={{ maxWidth: '500px', width: '60%', boxShadow: 'none' }}>
-            <div className="card" style={{ boxShadow: 'none', padding: '28px 32px', background: '#fff', borderRadius: '10px', border: '1.5px solid #e5e7eb' }}>
-              <div className="card-header flex items-center justify-between" style={{ borderBottom: '1px solid #e5e7eb', marginBottom: 18 }}>
-                <h2 className="card-title" style={{ fontWeight: 600, fontSize: '1.2rem', color: 'black', letterSpacing: '0.5px',marginBottom: 18  }}>Kit Details</h2>
+          <div className="dialog-content" style={{ maxWidth: '600px', width: '70%', boxShadow: 'none' }}>
+            <div className="card" style={{ border: 'none', boxShadow: 'none' }}>
+              <div className="card-header flex items-center justify-between" style={{ 
+                borderBottom: '1px solid #f0f0f0', 
+                padding: '12px 24px',
+                background: '#f9f9f9'
+              }}>
+                <h2 className="card-title" style={{ 
+                  fontSize: '14px', 
+                  fontWeight: 600, 
+                  color: '#333', 
+                  margin: 0,
+                  fontFamily: "'Poppins', sans-serif"
+                }}>Kit Details</h2>
                 <button 
-                  className="text-gray-500 hover:text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center"
+                  className="text-gray-500 hover:text-gray-700"
                   onClick={() => setShowKitDetails(false)}
-                  style={{ border: '1px solid #e5e7eb', boxShadow: 'none' }}
+                  style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
                 >
                   ×
                 </button>
               </div>
-              <div className="card-content" style={{ padding: 0 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px 24px', marginBottom: 18 }}>
+              <div className="card-content" style={{ padding: '0 24px 24px' }}>
+                <div className="grid grid-cols-2 gap-4 mb-4" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Kit ID</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.id}</div>
+                    <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Kit ID</p>
+                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.id}</p>
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Kit Name</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.name}</div>
+                    <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Kit Name</p>
+                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.name}</p>
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Outlet</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.department}</div>
+                    <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Department</p>
+                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.department}</p>
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Priority</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.priority}</div>
-                  </div>
-                  <div style={{ gridColumn: '1 / span 2' }}>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Items</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.items}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Quantity</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.quantity}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Status</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.status}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Date Created</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.date}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#444', fontSize: '0.98rem' }}>Time Created</div>
-                    <div style={{ color: '#222', fontSize: '1.05rem', marginTop: 2 }}>{selectedKit.time}</div>
+                    <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Priority</p>
+                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.priority}</p>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 18, paddingTop: 18, textAlign: 'right' }}>
-                  <button 
-                    className="btn btn-primary"
-                    style={{ background: '#0097a7', color: '#fff', fontWeight: 500, minWidth: 90 }}
-                    onClick={() => setShowKitDetails(false)}
-                  >
-                    Close
-                  </button>
+                <div className="mt-4">
+                  <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 8px 0', fontWeight: 600 }}>Items</p>
+                  <Table
+                    columns={[
+                      { key: 'item', header: 'Item' },
+                      { key: 'quantity', header: 'Quantity' }
+                    ]}
+                    data={selectedKit.items.split(',').map((item: string, index: number) => ({
+                      item: item.trim(),
+                      quantity: selectedKit.quantity
+                    }))}
+                  />
                 </div>
               </div>
             </div>

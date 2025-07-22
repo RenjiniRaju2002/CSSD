@@ -77,6 +77,32 @@
     border-color: #0097a7;
   }
   
+  /* Form controls */
+  .filter-input {
+    min-width: 180px; /* Adjust this value to match your design */
+    width: 100%;
+  }
+
+  /* Make sure the date inputs match the dropdown */
+  .filter-input input[type="date"] {
+    height: 40px; /* Match the height of other form controls */
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #111827;
+    background-color: white;
+  }
+
+  /* Ensure consistent spacing between filter elements */
+  .flex.gap-2 > * {
+    margin-right: 8px;
+  }
+
+  .flex.gap-2 > *:last-child {
+    margin-right: 0;
+  }
+  
   /* Buttons */
   .btn {
     display: inline-flex;

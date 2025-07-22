@@ -84,9 +84,53 @@
       "quantity": 5,
       "priority": "High",
       "requestedBy": "",
-      "status": "Requested",
+      "status": "Approved",
       "date": "2025-07-21",
       "time": "04:59 PM"
+    },
+    {
+      "id": "REQ009",
+      "department": "Cardiology",
+      "items": "scdss",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Approved",
+      "date": "2025-07-22",
+      "time": "10:39 am"
+    },
+    {
+      "id": "REQ010",
+      "department": "Cardiology",
+      "items": "zxxz",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Rejected",
+      "date": "2025-07-22",
+      "time": "11:05 am"
+    },
+    {
+      "id": "REQ011",
+      "department": "Neurology",
+      "items": "xzxzx",
+      "quantity": 6,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Rejected",
+      "date": "2025-07-22",
+      "time": "11:28 am"
+    },
+    {
+      "id": "REQ012",
+      "department": "Neurology",
+      "items": "sxzsx",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Approved",
+      "date": "2025-07-22",
+      "time": "11:29 am"
     }
   ],
   "receive_items": [
@@ -196,11 +240,81 @@
       "quantity": 5,
       "priority": "High",
       "requestedBy": "",
-      "status": "Pending",
+      "status": "Approved",
       "date": "2025-07-21",
       "time": "04:59 PM",
       "receivedDate": "2025-07-21",
       "receivedTime": "04:59 PM"
+    },
+    {
+      "id": "REC009",
+      "requestId": "REQ009",
+      "department": "Cardiology",
+      "items": "scdss",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Approved",
+      "date": "2025-07-22",
+      "time": "10:39 am",
+      "receivedDate": "2025-07-22",
+      "receivedTime": "10:39 am"
+    },
+    {
+      "id": "REC010",
+      "requestId": "REQ010",
+      "department": "Cardiology",
+      "items": "zxxz",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Rejected",
+      "date": "2025-07-22",
+      "time": "11:05 am",
+      "receivedDate": "2025-07-22",
+      "receivedTime": "11:05 am"
+    },
+    {
+      "id": "REC011",
+      "requestId": "REQ011",
+      "department": "Neurology",
+      "items": "xzxzx",
+      "quantity": 6,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Rejected",
+      "date": "2025-07-22",
+      "time": "11:28 am",
+      "receivedDate": "2025-07-22",
+      "receivedTime": "11:28 am"
+    },
+    {
+      "id": "REC012",
+      "requestId": "REQ012",
+      "department": "Neurology",
+      "items": "sxzsx",
+      "quantity": 5,
+      "priority": "High",
+      "requestedBy": "",
+      "status": "Approved",
+      "date": "2025-07-22",
+      "time": "11:29 am",
+      "receivedDate": "2025-07-22",
+      "receivedTime": "11:29 am"
+    },
+    {
+      "id": "REC016",
+      "requestId": "KIT004",
+      "department": "Cardiology",
+      "items": "cvv",
+      "quantity": 6,
+      "priority": "Medium",
+      "requestedBy": "",
+      "status": "Approved",
+      "date": "2025-07-22",
+      "time": "12:12 pm",
+      "receivedDate": "2025-07-22",
+      "receivedTime": "12:12 pm"
     }
   ],
   "stockItems": [
@@ -372,6 +486,16 @@
       "endTime": "17:17",
       "status": "Completed",
       "duration": 45
+    },
+    {
+      "id": "STE015",
+      "machine": "Autoclave-1",
+      "process": "Steam Sterilization",
+      "itemId": "REQ012",
+      "startTime": "14:14",
+      "endTime": "15:13",
+      "status": "Completed",
+      "duration": 45
     }
   ],
   "availableItems": [
@@ -429,6 +553,17 @@
       "sterilizationId": "STE001",
       "machine": "Autoclave-2",
       "process": "Chemical Sterilization"
+    },
+    {
+      "id": "REQ012",
+      "department": "Neurology",
+      "items": "sxzsx",
+      "quantity": 5,
+      "status": "Sterilized",
+      "readyTime": "15:13",
+      "sterilizationId": "STE015",
+      "machine": "Autoclave-1",
+      "process": "Steam Sterilization"
     }
   ],
   "createdKits": [
@@ -464,6 +599,18 @@
       "status": "Active",
       "date": "2025-07-09",
       "time": "04:23 pm"
+    },
+    {
+      "id": "KIT004",
+      "name": "ddddsv",
+      "department": "Cardiology",
+      "items": "cvv",
+      "quantity": 6,
+      "priority": "Medium",
+      "requestedBy": "",
+      "status": "Active",
+      "date": "2025-07-22",
+      "time": "12:12 pm"
     }
   ],
   "issueItems": [

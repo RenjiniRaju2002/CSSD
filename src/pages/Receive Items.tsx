@@ -72,7 +72,20 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
   }, []);
 
   // Filter and paginate requests
-  const sortedItems = [...requestedItems].sort((a, b) => a.id.localeCompare(b.id));
+  const sortedItems = [...requestedItems].sort((a, b) => {
+    // First try to sort by date if available
+    if (a.date && b.date) {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      // If dates are the same, sort by ID in descending order
+      if (dateDiff === 0) {
+        return b.id.localeCompare(a.id);
+      }
+      return dateDiff;
+    }
+    // Fall back to sorting by ID in descending order
+    return b.id.localeCompare(a.id);
+  });
+  
   const filteredItems = sortedItems.filter((item) => {
     const matchesSearch =
       item.requestId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,34 +150,26 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
           <div className="card-content">
             <div className="flex justify-between items-center mb-4">
               <div className="flex gap-2">
-                
+                <DropInput
+                  label="Status"
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  options={[
+                    { value: "all", label: "All Status" },
+                    { value: "requested", label: "Requested" },
+                    { value: "approved", label: "Approved" },
+                    { value: "rejected", label: "Rejected" },
+                  ]}
+                />
                 <DateInput
                   label="From Date"
                   value={dateFrom}
-                  onChange={setDateFrom}
-                  style={{ minWidth: 120 }}
-                  className="form-input text-sm"
-                  min={new Date().toISOString().split('T')[0]}
+                  onChange={e => setDateFrom(e.target.value)}
                 />
                 <DateInput
                   label="To Date"
                   value={dateTo}
                   onChange={e => setDateTo(e.target.value)}
-                  style={{ minWidth: 120 }}
-                  className="form-input text-sm"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-                <DropInput
-                  className="form-input text-sm" 
-                  value={statusFilter}
-                  onChange={setStatusFilter}
-                  options={[
-                    { value: "all", label: "All Status" },
-                    { value: "pending", label: "Requested" },
-                    { value: "approved", label: "Approved" },
-                   
-                  ]}
-                  placeholder="Select Status"
                 />
               </div>
               <div className="relative flex-1 max-w-md ml-auto">
@@ -177,7 +182,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                 columns={[
                   { key: 'requestId', header: 'Request ID' },
                   { key: 'department', header: 'Department' },
-                  { key: 'requestedBy', header: 'Requested By' },
+                 
                   { key: 'items', header: 'Items' },
                   { key: 'quantity', header: 'Quantity' },
                   { key: 'priority', header: 'Priority' },
@@ -186,26 +191,32 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                   { key: 'receivedTime', header: 'Received Time' },
                   {
                     key: 'actions',
-                    header: 'Actions',
+                    header: 'Approval',
                     render: (item: any) => (
-                      <div className="flex gap-2">
-                        <ApproveBtn
-                          onClick={() => {
-                            alert('Request approved!');
-                            handleStatusUpdate(item.id, 'Approved');
-                          }}
-                          className="button-gradient"
-                          size={12}
-                        />
-                        <RejectButton
-                          onClick={() => {
-                            alert('Request rejected!');
-                            handleStatusUpdate(item.id, 'Rejected');
-                          }}
-                          className="button-gradient"
-                          size={12}
-                        />
-                      </div>
+                      item.status === 'Approved' ? (
+                        <span style={{ color: 'green', fontWeight: 600 }}>Approved</span>
+                      ) : item.status === 'Rejected' ? (
+                        <span style={{ color: 'red', fontWeight: 600 }}>Rejected</span>
+                      ) : (
+                        <div className="flex gap-2">
+                          <ApproveBtn
+                            onClick={() => {
+                              alert('Request approved!');
+                              handleStatusUpdate(item.id, 'Approved');
+                            }}
+                            className="button-gradient"
+                            size={12}
+                          />
+                          <RejectButton
+                            onClick={() => {
+                              alert('Request rejected!');
+                              handleStatusUpdate(item.id, 'Rejected');
+                            }}
+                            className="button-gradient"
+                            size={12}
+                          />
+                        </div>
+                      )
                     )
                   }
                 ]}

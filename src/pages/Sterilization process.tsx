@@ -79,7 +79,13 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   useEffect(() => {
     fetch('http://192.168.50.95:3001/sterilizationProcesses')
       .then(res => res.json())
-      .then(data => setProcesses(data))
+      .then(data => {
+        // Sort processes in descending order by ID (assuming higher IDs are more recent)
+        const sortedData = [...data].sort((a, b) => 
+          parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, ''))
+        );
+        setProcesses(sortedData);
+      })
       .catch(() => setProcesses([]));
   }, []);
 
@@ -430,10 +436,20 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
               </form>
               </div>
             <div className="flex justify-content-end gap-2 mt-2">
-              <ButtonWithGradient type="button" className="button-gradient" disabled>
+              <ButtonWithGradient 
+                type="button" 
+                className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+                disabled={currentStep === 0}
+              >
                 Back
               </ButtonWithGradient>
-              <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(1)}>
+              <ButtonWithGradient 
+                type="button" 
+                className={`button-gradient ${currentStep === 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => currentStep < 2 && setCurrentStep(currentStep + 1)}
+                disabled={currentStep === 2}
+              >
                 Next
               </ButtonWithGradient>
             </div>
@@ -447,13 +463,25 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                   <h2 className="card-title">Active Processes</h2>
                 </div>
                 <div className="card-content">
-                  <Table columns={columns} data={processes} />
+                  <Table columns={columns} data={[...processes].sort((a, b) => 
+                    parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, ''))
+                  )} />
                 </div>
                 <div className="flex justify-end gap-2 mt-2"  style={{justifyContent:'flex-end'}}>
-                  <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(0)}>
+                  <ButtonWithGradient 
+                    type="button" 
+                    className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+                    disabled={currentStep === 0}
+                  >
                     Back
                   </ButtonWithGradient>
-                  <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(2)}>
+                  <ButtonWithGradient 
+                    type="button" 
+                    className={`button-gradient ${currentStep === 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => currentStep < 2 && setCurrentStep(currentStep + 1)}
+                    disabled={currentStep === 2}
+                  >
                     Next
                   </ButtonWithGradient>
                 </div>
@@ -482,14 +510,28 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                         render: () => <span className="status-badge status-sterilized text-center justify-content-center">Sterilized</span>
                       },
                     ]}
-                    data={processes.filter(p => p.status === 'Completed')}
+                    data={processes
+                      .filter(p => p.status === 'Completed')
+                      .sort((a, b) => 
+                        parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, ''))
+                      )}
                   />
                 </div>
                 <div className="flex justify-content-end gap-2 mt-2">
-                    <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(1)}>
+                    <ButtonWithGradient 
+                      type="button" 
+                      className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+                      disabled={currentStep === 0}
+                    >
                       Back
                     </ButtonWithGradient>
-                    <ButtonWithGradient type="button" className="button-gradient" disabled>
+                    <ButtonWithGradient 
+                      type="button" 
+                      className={`button-gradient ${currentStep === 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => currentStep < 2 && setCurrentStep(currentStep + 1)}
+                      disabled={currentStep === 2}
+                    >
                       Next
                     </ButtonWithGradient>
                 </div>

@@ -453,10 +453,20 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
           </div>
             </div>
             <div className="flex justify-content-end gap-2 mt-4">
-              <ButtonWithGradient type="button" className="button-gradient" disabled>
+              <ButtonWithGradient 
+                type="button" 
+                className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+                disabled={currentStep === 0}
+              >
                 Back
               </ButtonWithGradient>
-              <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(1)}>
+              <ButtonWithGradient 
+                type="button" 
+                className={`button-gradient ${currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => currentStep < 1 && setCurrentStep(currentStep + 1)}
+                disabled={currentStep === 1}
+              >
                 Next
               </ButtonWithGradient>
             </div>
@@ -476,10 +486,20 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
           </div>
         </div>
             <div className="flex justify-content-end gap-2 mt-4">
-              <ButtonWithGradient type="button" className="button-gradient" onClick={() => setCurrentStep(0)}>
+              <ButtonWithGradient 
+                type="button" 
+                className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+                disabled={currentStep === 0}
+              >
                 Back
               </ButtonWithGradient>
-              <ButtonWithGradient type="button" className="button-gradient" disabled>
+              <ButtonWithGradient 
+                type="button" 
+                className={`button-gradient ${currentStep === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => currentStep < 1 && setCurrentStep(currentStep + 1)}
+                disabled={currentStep === 1}
+              >
                 Next
               </ButtonWithGradient>
             </div>
