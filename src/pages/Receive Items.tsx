@@ -156,7 +156,7 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                   onChange={e => setStatusFilter(e.target.value)}
                   options={[
                     { value: "all", label: "All Status" },
-                    { value: "requested", label: "Requested" },
+                    { value: "pending", label: "Pending" },
                     { value: "approved", label: "Approved" },
                     { value: "rejected", label: "Rejected" },
                   ]}

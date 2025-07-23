@@ -119,20 +119,80 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
     return () => window.removeEventListener('popstate', handleNavigation);
   }, [selectedDepartment, selectedPriority, selectedDate, requestedBy, itemInput, itemQuantity, pendingItems, kitName, kitDepartment, kitPriority, kitRequestedBy, kitItemName, kitItemQuantity, kitItems]);
 
-  // Function to validate form fields
-  const validateFormFields = () => {
-    const missingFields = [];
+  // Function to validate form fields with toast notifications
+  const validateFormFields = (): boolean => {
+    const errors: {field: string; message: string}[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    if (!selectedDepartment) missingFields.push("Outlet");
-    if (!selectedPriority) missingFields.push("Priority");
-    if (!itemInput) missingFields.push("Item/Kit");
-    if (!itemQuantity) missingFields.push("Quantity");
-    if (!selectedDate) missingFields.push("Required Date");
+    // Field validations
+    if (!selectedDepartment) {
+      errors.push({field: 'outlet', message: 'Please select an outlet from the dropdown'});
+    }
     
-    if (missingFields.length > 0) {
-      alert(`Please enter the following required fields: ${missingFields.join(", ")}`);
+    if (!selectedPriority) {
+      errors.push({field: 'priority', message: 'Please select a priority level'});
+    }
+    
+    if (!itemInput?.trim()) {
+      errors.push({field: 'item', message: 'Please enter an item/kit name'});
+    }
+    
+    if (!itemQuantity) {
+      errors.push({field: 'quantity', message: 'Please enter a quantity'});
+    } else if (isNaN(Number(itemQuantity)) || Number(itemQuantity) <= 0) {
+      errors.push({field: 'quantity', message: 'Quantity must be a positive number'});
+    }
+    
+    if (!selectedDate) {
+      errors.push({field: 'date', message: 'Please select a required date'});
+    } else {
+      const selected = new Date(selectedDate);
+      selected.setHours(0, 0, 0, 0);
+      if (selected < today) {
+        errors.push({field: 'date', message: 'Date cannot be in the past'});
+      }
+    }
+    
+    // If there are errors, show them and return false
+    if (errors.length > 0) {
+      // Group errors by field for better display
+      const errorMessages = errors.map(e => e.message);
+      const uniqueMessages = [...new Set(errorMessages)];
+      
+      // Show toast with all error messages
+      toast.error(
+        <div>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Please fix the following issues:</div>
+          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            {uniqueMessages.map((msg, index) => (
+              <li key={index}>{msg}</li>
+            ))}
+          </ul>
+        </div>,
+        { 
+          position: "top-right",
+          autoClose: 6000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          style: { maxWidth: '500px' }
+        }
+      );
+      
+      // Focus on first error field if possible
+      if (errors[0]) {
+        const firstErrorField = errors[0].field;
+        const inputElement = document.querySelector(`[name="${firstErrorField}"]`);
+        if (inputElement) {
+          (inputElement as HTMLElement).focus();
+        }
+      }
+      
       return false;
     }
+    
     return true;
   };
 
@@ -199,24 +259,27 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
   // Handlers
   const addItemToList = () => {
-    if (!itemInput || !itemQuantity) {
-      window.alert('Please fill in both the Item/Kit and Quantity fields before adding a request.');
+    if (!validateFormFields()) {
       return;
     }
+
+    const newItem = {
+      department: selectedDepartment,
+      priority: selectedPriority,
+      requestedBy: requestedBy,
+      item: itemInput,
+      quantity: itemQuantity,
+      date: format(selectedDate || new Date(), 'yyyy-MM-dd')
+    };
+
+    setPendingItems([...pendingItems, newItem]);
     
-      setPendingItems([
-        ...pendingItems,
-        {
-          department: selectedDepartment,
-          priority: selectedPriority,
-          requestedBy: requestedBy,
-          item: itemInput,
-          quantity: itemQuantity,
-        date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
-        },
-      ]);
-      setItemInput("");
-      setItemQuantity("");
+    // Clear item input fields
+    setItemInput('');
+    setItemQuantity('');
+    
+    // Show success message
+    toast.success('Item added to request list!', { autoClose: 2000 });
   };
 
   const handleCreateRequest = (e: React.FormEvent) => {
@@ -247,68 +310,107 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   };
 
   const handleSaveRequest = async () => {
-    if (!selectedDepartment || !selectedPriority || !selectedDate || pendingItems.length === 0) return;
-    const nextId = `REQ${(requests.length + 1).toString().padStart(3, "0")}`;
-    const combinedItems = pendingItems.map(item => item.item).join(', ');
-    const totalQuantity = pendingItems.reduce((sum, item) => sum + Number(item.quantity), 0);
-    const department = pendingItems[0].department;
-    const priority = pendingItems[0].priority;
-    const requestedBy = pendingItems[0].requestedBy;
-    const date = pendingItems[0].date;
-    const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    // Validate required fields
+    if (!selectedDepartment) { alert('Please select an Outlet'); return; }
+    if (!selectedPriority) { alert('Please select a Priority'); return; }
+    if (!selectedDate) { alert('Please select a Required Date'); return; }
+    if (pendingItems.length === 0) { alert('Please add at least one item to the request'); return; }
     
-    const newRequest = {
-      id: nextId,
-      department,
-      items: combinedItems,
-      quantity: totalQuantity,
-      priority,
-      requestedBy,
-      status: "Requested",
-      date,
-      time: currentTime
-    };
-    
-    // POST to API for cssd_requests
-    await fetch('http://192.168.50.95:3001/cssd_requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newRequest)
-    });
+    // Validate each item in pendingItems
+    for (let i = 0; i < pendingItems.length; i++) {
+      const item = pendingItems[i];
+      if (!item.department) { alert(`Item ${i + 1}: Please select an Outlet`); return; }
+      if (!item.priority) { alert(`Item ${i + 1}: Please select a Priority`); return; }
+      if (!item.item) { alert(`Item ${i + 1}: Please enter an Item/Kit`); return; }
+      if (!item.quantity || isNaN(Number(item.quantity)) || Number(item.quantity) <= 0) { 
+        alert(`Item ${i + 1}: Please enter a valid Quantity (must be a positive number)`); 
+        return; 
+      }
+    }
 
-    // Create corresponding entry in receive_items
-    const receiveItemId = `REC${(requests.length + 1).toString().padStart(3, "0")}`;
-    const newReceiveItem = {
-      id: receiveItemId,
-      requestId: nextId,
-      department,
-      items: combinedItems,
-      quantity: totalQuantity,
-      priority,
-      requestedBy,
-      status: "Pending",
-      date,
-      time: currentTime,
-      receivedDate: date,
-      receivedTime: currentTime
-    };
+    try {
+      const nextId = `REQ${(requests.length + 1).toString().padStart(3, "0")}`;
+      const combinedItems = pendingItems.map(item => item.item).join(', ');
+      const totalQuantity = pendingItems.reduce((sum, item) => sum + Number(item.quantity), 0);
+      const department = pendingItems[0].department;
+      const priority = pendingItems[0].priority;
+      const requestedBy = pendingItems[0].requestedBy || 'System';
+      const date = format(selectedDate || new Date(), 'yyyy-MM-dd');
+      const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      
+      const newRequest = {
+        id: nextId,
+        department,
+        items: combinedItems,
+        quantity: totalQuantity,
+        priority,
+        requestedBy,
+        status: "Requested",
+        date,
+        time: currentTime
+      };
+      
+      // POST to API for cssd_requests
+      await fetch('http://192.168.50.95:3001/cssd_requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRequest)
+      });
 
-    // POST to API for receive_items
-    await fetch('http://192.168.50.95:3001/receive_items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newReceiveItem)
-    });
+      // Create corresponding entry in receive_items
+      const receiveItemId = `REC${(requests.length + 1).toString().padStart(3, "0")}`;
+      const newReceiveItem = {
+        id: receiveItemId,
+        requestId: nextId,
+        department,
+        items: combinedItems,
+        quantity: totalQuantity,
+        priority,
+        requestedBy,
+        status: "Pending",
+        date,
+        time: currentTime,
+        receivedDate: date,
+        receivedTime: currentTime
+      };
 
-    // Fetch updated requests
-    const res = await fetch('http://192.168.50.95:3001/cssd_requests');
-    const updated = await res.json();
-    setRequests(updated);
+      // POST to API for receive_items
+      await fetch('http://192.168.50.95:3001/receive_items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReceiveItem)
+      });
 
-    // Clear form data after successful save
-    clearFormData();
-    setCurrentStep(1); // Move to step 2 after successful save
-    toast.success('Request created');
+      // Show success toast
+      toast.success('Request created successfully!', { 
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
+      
+      // Clear form and close modal
+      clearFormData();
+      setShowCreateKit(false);
+      
+      // Refresh requests
+      const res = await fetch('http://192.168.50.95:3001/cssd_requests');
+      const updatedRequests = await res.json();
+      setRequests(updatedRequests);
+      
+      // Find and select the newly created request
+      const newRequestItem = updatedRequests.find((req: any) => req.id === nextId);
+      if (newRequestItem) {
+        setSelectedRequest(newRequestItem);
+        setShowRequestDetails(true);
+      }
+      
+    } catch (error) {
+      console.error('Error saving request:', error);
+      alert('Failed to save request. Please try again.');
+    }
   };
 
   const handleViewRequest = (request: any) => {
@@ -327,22 +429,42 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   };
 
   const handleAddKitItem = () => {
-    if (!validateKitFormFields()) {
+    // Validate required fields
+    if (!kitItemName || kitItemName.trim() === '') {
+      alert('Please enter an item name');
       return;
     }
     
-      setKitItems([
-        ...kitItems,
+    if (!kitItemQuantity || isNaN(Number(kitItemQuantity)) || Number(kitItemQuantity) <= 0) {
+      alert('Please enter a valid quantity (must be a positive number)');
+      return;
+    }
+    
+    if (!kitDepartment) {
+      alert('Please select a department');
+      return;
+    }
+    
+    if (!kitPriority) {
+      alert('Please select a priority level');
+      return;
+    }
+    
+    // Add the item to kitItems
+    setKitItems([
+      ...kitItems,
       {
         department: kitDepartment,
         priority: kitPriority,
         requestedBy: kitRequestedBy,
-          item: kitItemName,
-          quantity: kitItemQuantity,
-        },
-      ]);
-      setKitItemName("");
-      setKitItemQuantity("");
+        item: kitItemName,
+        quantity: kitItemQuantity,
+      },
+    ]);
+    
+    // Clear the item input fields
+    setKitItemName("");
+    setKitItemQuantity("");
   };
 
   const handleSaveKit = async () => {
@@ -497,70 +619,89 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     <div style={{flex:1}}>
                       {/* <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label> */}
                       <DropInput
+                        name="outlet"
                         label="Outlet"
                         value={selectedDepartment}
                         onChange={e => setSelectedDepartment(e.target.value)}
+                        error={!selectedDepartment}
                         options={[
-                          { label: "Select outlet", value: "select outlet" },
+                          { label: "Select outlet", value: "" },
                           { label: "Cardiology", value: "Cardiology" },
                           { label: "Neurology", value: "Neurology" },
-                          { label: "Orthopedics", value: "Orthopedics" }
+                          { label: "Orthopedics", value: "Orthopedics" },
+                          { label: "Pediatrics", value: "Pediatrics" },
+                          { label: "Oncology", value: "Oncology" },
+                          { label: "Gynecology", value: "Gynecology" },
+                          { label: "General Surgery", value: "General Surgery" },
+                          { label: "ENT", value: "ENT" },
+                          { label: "Ophthalmology", value: "Ophthalmology" },
+                          { label: "Urology", value: "Urology" },
+                          { label: "Dermatology", value: "Dermatology" },
+                          { label: "Emergency Department", value: "Emergency Department" },
+                          { label: "Intensive Care Unit", value: "Intensive Care Unit" },
+                          { label: "Operating Room", value: "Operating Room" },
+                          { label: "Radiology", value: "Radiology" },
+                          { label: "Laboratory", value: "Laboratory" },
+                          { label: "Pharmacy", value: "Pharmacy" },
+                          { label: "Physical Therapy", value: "Physical Therapy" },
+                          { label: "Outpatient Clinic", value: "Outpatient Clinic" }
                         ]}
-                      
-                        // width="70%"
                       />
                     </div>
                     <div style={{flex:1}}>
                       {/* <label className="form-label">Priority <span style={{color: 'red'}}>*</span></label> */}
                       <DropInput
+                        name="priority"
                         label="Priority"
                         value={selectedPriority}
                         onChange={e => setSelectedPriority(e.target.value)}
+                        error={!selectedPriority}
                         options={[
                           { label: "Select priority", value: "" },
                           { label: "High", value: "High" },
                           { label: "Medium", value: "Medium" },
                           { label: "Low", value: "Low" }
                         ]}
-                      
-                        // width="70%"
                       />
                     </div>
                  
                     <div style={{flex:1}}>
                       <Input
+                        name="item"
                         label="Item /Kit"
                         type="text"
                         placeholder="Add item name"
                         value={itemInput}
                         onChange={(e) => setItemInput(e.target.value)}
+                        error={!itemInput}
                         required
-                        // width={'70%'}
                       />
                     </div>  
                       <div style={{flex:1}}>
                           <Input
+                            name="quantity"
                             label="Quantity"
                             type="number"
                             placeholder="Enter quantity"
                             // min={1}
                             value={itemQuantity}
                             onChange={(e) => setItemQuantity(e.target.value)}
+                            error={!itemQuantity}
                             required
-                            // width={'70%'}
                           />
                       </div>
                       <div style={{flex:1}}>
                         {/* <label className="form-label">Required Date <span style={{color: 'red'}}></span></label> */}
                         <DateInput
+                          name="date"
                           label="Required date"
                           // type="date"
                           // className="form-input"
                           value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
                           onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
                           min={new Date().toISOString().split('T')[0]}
+                          error={!selectedDate}
                           // required
-                          // width={'70%'}
                         />
                       </div>
                 </div>
@@ -716,6 +857,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     options={[
                       { value: "all", label: "All Status" },
                       { value: "requested", label: "Requested" },
+                      {value:"Rejected",label:"Rejected"},
                       { value: "Approved", label: "Approved" }
                     ]}
                   />
@@ -795,6 +937,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <Input
+                        name="kitName"
                         label="Kit Name"
                         value={kitName} 
                         onChange={e => setKitName(e.target.value)}
@@ -804,6 +947,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     </div>
                     <div>
                       <DropInput
+                        name="kitDepartment"
                         label="Outlet"
                         value={kitDepartment}
                         onChange={e => setKitDepartment(e.target.value)}
@@ -812,13 +956,30 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                           { label: "OR-2", value: "OR-2" },
                           { label: "Cardiology", value: "Cardiology" },
                           { label: "Neurology", value: "Neurology" },
-                          { label: "Orthopedics", value: "Orthopedics" }
+                          { label: "Orthopedics", value: "Orthopedics" },
+                          { label: "Pediatrics", value: "Pediatrics" },
+                          { label: "Oncology", value: "Oncology" },
+                          { label: "Gynecology", value: "Gynecology" },
+                          { label: "General Surgery", value: "General Surgery" },
+                          { label: "ENT", value: "ENT" },
+                          { label: "Ophthalmology", value: "Ophthalmology" },
+                          { label: "Urology", value: "Urology" },
+                          { label: "Dermatology", value: "Dermatology" },
+                          { label: "Emergency Department", value: "Emergency Department" },
+                          { label: "Intensive Care Unit", value: "Intensive Care Unit" },
+                          { label: "Operating Room", value: "Operating Room" },
+                          { label: "Radiology", value: "Radiology" },
+                          { label: "Laboratory", value: "Laboratory" },
+                          { label: "Pharmacy", value: "Pharmacy" },
+                          { label: "Physical Therapy", value: "Physical Therapy" },
+                          { label: "Outpatient Clinic", value: "Outpatient Clinic" }
                         ]}
                         width="100%"
                       />
                     </div>
                     <div>
                       <DropInput
+                        name="kitPriority"
                         label="Priority"
                         value={kitPriority}
                         onChange={e => setKitPriority(e.target.value)}
@@ -834,6 +995,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                    
                     <div>
                       <Input
+                        name="kitItemName"
                         label="Item/Kit"
                         value={kitItemName}
                         onChange={e => setKitItemName(e.target.value)}
@@ -843,6 +1005,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     </div>
                     <div>
                       <Input
+                        name="kitItemQuantity"
                         label="Quantity"
                         type="number" 
                         value={kitItemQuantity}
@@ -906,7 +1069,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
             <div className="card" style={{ border: 'none', boxShadow: 'none' }}>
               <div className="card-header flex items-center justify-between" style={{ 
                 borderBottom: '1px solid #f0f0f0', 
-                padding: '12px 24px',
+                padding: '12px 16px',
                 background: '#f9f9f9'
               }}>
                 <h2 className="card-title" style={{ 
@@ -919,36 +1082,54 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                 <button 
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => setShowKitDetails(false)}
-                  style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', fontSize: '16px', cursor: 'pointer' }}
                 >
                   ×
                 </button>
               </div>
-              <div className="card-content" style={{ padding: '0 24px 24px' }}>
+              <div className="card-content" style={{ padding: '16px' }}>
                 <div className="grid grid-cols-2 gap-4 mb-4" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Kit ID</p>
-                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.id}</p>
+                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.id}</p>
                   </div>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Kit Name</p>
-                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.name}</p>
+                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.name}</p>
                   </div>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Department</p>
-                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.department}</p>
+                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.department}</p>
                   </div>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Priority</p>
-                    <p style={{ fontSize: '14px', color: '#333', margin: 0, fontWeight: 400 }}>{selectedKit.priority}</p>
+                    <p style={{ 
+                      fontSize: '13px', 
+                      color: selectedKit.priority === 'High' ? '#dc2626' : 
+                            selectedKit.priority === 'Medium' ? '#f59e0b' : '#10b981',
+                      margin: 0, 
+                      fontWeight: 500 
+                    }}>
+                      {selectedKit.priority}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 8px 0', fontWeight: 600 }}>Items</p>
                   <Table
                     columns={[
-                      { key: 'item', header: 'Item' },
-                      { key: 'quantity', header: 'Quantity' }
+                      { 
+                        key: 'item', 
+                        header: 'Item',
+                        headerStyle: { fontSize: '12px', fontWeight: 600, color: '#4b5563' },
+                        cellStyle: { fontSize: '13px', color: '#1f2937' }
+                      },
+                      { 
+                        key: 'quantity', 
+                        header: 'Quantity',
+                        headerStyle: { fontSize: '12px', fontWeight: 600, color: '#4b5563' },
+                        cellStyle: { fontSize: '13px', color: '#1f2937' }
+                      }
                     ]}
                     data={selectedKit.items.split(',').map((item: string, index: number) => ({
                       item: item.trim(),
