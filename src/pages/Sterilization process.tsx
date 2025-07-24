@@ -13,6 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import Stepper from '../components/Stepper';
 import DropInput from "../components/DropInput";
+import DateInput from "../components/DateInput";
 import Breadcrumb from "../components/Breadcrumb";
 
 interface SterilizationProcessProps {
@@ -69,6 +70,8 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
   const [consumptionRecords, setConsumptionRecords] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [showMachineStatusModal, setShowMachineStatusModal] = useState(false);
   const [eyeHover, setEyeHover] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -136,11 +139,20 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     const processToUpdate = processes.find(p => p.id === id);
     if (!processToUpdate) return;
 
-    const updateData: any = { status: newStatus };
+    const updateData: any = { 
+      status: newStatus,
+      updatedAt: new Date().toISOString() // Add current timestamp
+    };
     
     // If completing the process, set the end time
     if (newStatus === "Completed" && !processToUpdate.endTime) {
       updateData.endTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      updateData.completedAt = new Date().toISOString(); // Add completion timestamp
+    } else if (newStatus === "In Progress" && !processToUpdate.startTime) {
+      updateData.startTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      updateData.startedAt = new Date().toISOString(); // Add start timestamp
+    } else if (newStatus === "Paused") {
+      updateData.pausedAt = new Date().toISOString(); // Add pause timestamp
     }
 
     const updatedProcesses = processes.map(p => p.id === id ? { ...p, ...updateData } : p);
@@ -273,9 +285,72 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     setCurrentStep(1); // Go to Active Processes step
   };
 
+  // Filter processes based on search term, status, and date range
+  const filteredProcesses = processes.filter(process => {
+    const matchesSearch = 
+      process.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      process.machine.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      process.process.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      process.itemId.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" || 
+      process.status.toLowerCase() === statusFilter.toLowerCase() ||
+      (statusFilter === "in progress" && process.status === "In Progress") ||
+      (statusFilter === "completed" && process.status === "Completed") ||
+      (statusFilter === "failed" && process.status === "Failed");
+
+    // Filter by date range if dates are selected
+    let matchesDate = true;
+    if (fromDate || toDate) {
+      const processDate = new Date(process.startTime);
+      const from = fromDate ? new Date(fromDate) : null;
+      const to = toDate ? new Date(toDate) : null;
+      
+      if (from) {
+        from.setHours(0, 0, 0, 0);
+        matchesDate = matchesDate && processDate >= from;
+      }
+      if (to) {
+        to.setHours(23, 59, 59, 999);
+        matchesDate = matchesDate && processDate <= to;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  // Filter available requests by date range
+  const getFilteredRequests = () => {
+    if (!fromDate && !toDate) return { requests: availableRequests, surgeries: consumptionRecords };
+    
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+    
+    const filterByDate = (item) => {
+      const itemDate = new Date(item.date || item.receivedDate);
+      
+      if (from && to) {
+        return itemDate >= from && itemDate <= to;
+      } else if (from) {
+        return itemDate >= from;
+      } else if (to) {
+        return itemDate <= to;
+      }
+      
+      return true;
+    };
+    
+    return {
+      requests: availableRequests.filter(filterByDate),
+      surgeries: consumptionRecords.filter(filterByDate)
+    };
+  };
+
+  const { requests: filteredRequests, surgeries: filteredSurgeries } = getFilteredRequests();
+
   // Summary cards
-  const inProgressCount = processes.filter(p => p.status === "In Progress").length;
-  const completedTodayCount = processes.filter(p => p.status === "Completed").length;
+  const inProgressCount = filteredProcesses.filter(p => p.status === "In Progress").length;
+  const completedTodayCount = filteredProcesses.filter(p => p.status === "Completed").length;
   const alertCount = machines.filter(m => m.status === "Maintenance").length;
 
   // Table columns
@@ -330,16 +405,22 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
     <>
       <Header sidebarCollapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} showDate showTime showCalculator />
       <PageContainer>
-        <SectionHeading 
-          title="Sterilization Process" 
-          subtitle="Manage sterilization cycles and monitor progress" 
-          className="sterilization-heading w-100" 
+        <div className="flex justify-between items-center mb-4">
+          <SectionHeading 
+            title="Sterilization Process" 
+            subtitle="Manage sterilization cycles and monitor progress" 
+            className="sterilization-heading" 
+          />
+          
+        </div>
+        <Breadcrumb 
+          steps={[{ label: 'Start Sterilization' }, { label: 'Active Processes' },{ label: 'Available Items' }]}
+          activeStep={currentStep} 
+          onStepClick={setCurrentStep}
         />
-      <Breadcrumb steps={[{ label: 'Start Sterilization' }, { label: 'Active Processes' },{ label: 'Available Items' }]}
-       activeStep={currentStep} onStepClick={setCurrentStep}/>
         <div className="grid2 grid-cols-3 md:grid-cols-3 gap-6 mb-6 mt-3">
           <Cards title="In Progress" subtitle={inProgressCount} />
-          <Cards title="Completed Today" subtitle={completedTodayCount} />
+          <Cards title="Completed" subtitle={completedTodayCount} />
           <Cards title="In Maintenance" subtitle={alertCount} />
         </div>
         {/* Step 1: Start Sterilization */}
@@ -378,6 +459,48 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
             <div className="card-content">
               <form onSubmit={startSterilization}>
                 <div style={{ display: 'flex', gap: '10px' }}>
+              
+                  <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
+                    <div style={{ flex: 1 }}>
+                      <DateInput
+                        label="From Date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <DateInput
+                        label="To Date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        min={fromDate}
+                      />
+                    </div>
+                  </div>
+                  
+
+                  <div style={{ flex: 1 }}>
+                    <DropInput
+                      label="Item/Request ID"
+                      value={selectedRequestId}
+                      onChange={e => setSelectedRequestId(e.target.value)}
+                      options={[
+                        { label: "Select approved request or surgery", value: "" },
+                        // Requests (pre-surgery)
+                        ...filteredRequests.map(req => ({
+                          label: `REQ: ${req.requestId || req.id} - ${req.department} (${req.items})`,
+                          value: req.requestId || req.id
+                        })),
+                        // Surgery IDs (post-surgery)
+                        ...filteredSurgeries.map(rec => ({
+                          label: `SURG: ${rec.id} - ${rec.dept} (${rec.items})`,
+                          value: rec.id
+                        }))
+                      ]}
+                      width="100%"
+                    />
+                  </div>
+
                   <div style={{ flex: 1 }}>
                     <DropInput
                       label="Select Machine"
@@ -393,6 +516,8 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                       width="100%"
                     />
                   </div>
+
+                  
                   <div style={{ flex: 1 }}>
                     <DropInput
                       label="Sterilization Method"
@@ -408,34 +533,16 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                       width="100%"
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <DropInput
-                      label="Item/Request ID"
-                      value={selectedRequestId}
-                      onChange={e => setSelectedRequestId(e.target.value)}
-                      options={[
-                        { label: "Select approved request or surgery", value: "" },
-                        // Requests (pre-surgery)
-                        ...availableRequests.map(req => ({
-                          label: `REQ: ${req.requestId || req.id} - ${req.department} (${req.items})`,
-                          value: req.requestId || req.id
-                        })),
-                        // Surgery IDs (post-surgery)
-                        ...consumptionRecords.map(rec => ({
-                          label: `SURG: ${rec.id} - ${rec.dept} (${rec.items})`,
-                          value: rec.id
-                        }))
-                      ]}
-                      width="100%"
-                    />
-                  </div>
+               
                 </div>
-                <ButtonWithGradient type="submit" className="button-gradient w-full" disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
+                <div className="flex justify-content-end gap-2 mt-2">
+                <ButtonWithGradient type="submit" className="button-gradient w-full " disabled={!selectedMachine || !selectedProcess || !selectedRequestId}>
                   Start Sterilization Process
                 </ButtonWithGradient>
+                </div>
               </form>
               </div>
-            <div className="flex justify-content-end gap-2 mt-2">
+            <div className="flex justify-between mt-4">
               <ButtonWithGradient 
                 type="button" 
                 className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -463,11 +570,46 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                   <h2 className="card-title">Active Processes</h2>
                 </div>
                 <div className="card-content">
-                  <Table columns={columns} data={[...processes].sort((a, b) => 
-                    parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, ''))
-                  )} />
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div className="flex-1 min-w-[200px]">
+                      <DateInput
+                        label="From Date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <DateInput
+                        label="To Date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        min={fromDate}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <DropInput
+                        label="Status"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        options={[
+                          { label: "All Status", value: "all" },
+                          { label: "In Progress", value: "In Progress" },
+                          { label: "Paused", value: "Paused" },
+                          { label: "Completed", value: "Completed" },
+                        ]}
+                        width="100%"
+                      />
+                    </div>
+                 
+                  </div>
+                  <Table 
+                    columns={columns} 
+                    data={filteredProcesses.sort((a, b) => 
+                      parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, ''))
+                    )} 
+                  />
                 </div>
-                <div className="flex justify-end gap-2 mt-2"  style={{justifyContent:'flex-end'}}>
+                <div className="flex justify-between mt-4">
                   <ButtonWithGradient 
                     type="button" 
                     className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -510,14 +652,14 @@ const SterilizationProcess: React.FC<SterilizationProcessProps> = ({ sidebarColl
                         render: () => <span className="status-badge status-sterilized text-center justify-content-center">Sterilized</span>
                       },
                     ]}
-                    data={processes
+                    data={filteredProcesses
                       .filter(p => p.status === 'Completed')
                       .sort((a, b) => 
                         parseInt(b.id.replace(/\D/g, '')) - parseInt(a.id.replace(/\D/g, ''))
                       )}
                   />
                 </div>
-                <div className="flex justify-content-end gap-2 mt-2">
+                <div className="flex justify-between mt-4">
                     <ButtonWithGradient 
                       type="button" 
                       className={`button-gradient ${currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}

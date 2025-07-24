@@ -111,29 +111,58 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
 
   const handleStatusUpdate = async (itemId: string, newStatus: string) => {
     try {
+      // Find the item to get its requestId before updating
+      const itemToUpdate = requestedItems.find(item => item.id === itemId);
+      
+      if (!itemToUpdate) return;
+
+      // Prepare the update data
+      const updateData: any = { 
+        status: newStatus 
+      };
+
+      // Only update receivedDate and receivedTime when approving/rejecting
+      if (newStatus !== 'Pending') {
+        updateData.receivedDate = format(new Date(), 'yyyy-MM-dd');
+        updateData.receivedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
       // Update the receive_items table
       await fetch(`http://192.168.50.95:3001/receive_items/${itemId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
       });
 
-      // Also update the corresponding cssd_requests table
-      const item = requestedItems.find(req => req.id === itemId);
-      if (item && item.requestId) {
-        await fetch(`http://192.168.50.95:3001/cssd_requests/${item.requestId}`, {
+      // Also update the corresponding cssd_requests table if requestId exists
+      if (itemToUpdate.requestId) {
+        await fetch(`http://192.168.50.95:3001/cssd_requests/${itemToUpdate.requestId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify(updateData)
         });
       }
 
-      // Refresh the data
+      // Update the local state to reflect the change immediately
+      const updatedItems = requestedItems.map(item => 
+        item.id === itemId 
+          ? { ...item, status: newStatus, ...updateData }
+          : item
+      );
+      
+      setRequestedItems(updatedItems);
+      
+      // Show success message
+      alert(`Request ${newStatus.toLowerCase()} successfully!`);
+      
+      // Force a refresh of the data to ensure consistency
       const res = await fetch('http://192.168.50.95:3001/receive_items');
-      const updated = await res.json();
-      setRequestedItems(updated);
+      const updatedReceiveItems = await res.json();
+      setRequestedItems(updatedReceiveItems);
+      
     } catch (error) {
       console.error('Error updating status:', error);
+      alert('Failed to update status. Please try again.');
     }
   };
 
@@ -182,9 +211,40 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                 columns={[
                   { key: 'requestId', header: 'Request ID' },
                   { key: 'department', header: 'Department' },
-                 
-                  { key: 'items', header: 'Items' },
-                  { key: 'quantity', header: 'Quantity' },
+                  { 
+                    key: 'items', 
+                    header: 'Items',
+                    render: (item: any) => {
+                      try {
+                        // Try to parse items as JSON array
+                        const items = JSON.parse(item.items);
+                        if (Array.isArray(items)) {
+                          return items.map((i: any) => `${i.name} (${i.quantity})`).join(', ');
+                        }
+                      } catch (e) {
+                        // If not a valid JSON, display as is
+                        return item.items;
+                      }
+                      return item.items;
+                    }
+                  },
+                  { 
+                    key: 'quantity', 
+                    header: 'Quantity',
+                    render: (item: any) => {
+                      try {
+                        // For array items, sum up quantities
+                        const items = JSON.parse(item.items);
+                        if (Array.isArray(items)) {
+                          return items.reduce((sum: number, i: any) => sum + (Number(i.quantity) || 0), 0);
+                        }
+                      } catch (e) {
+                        // If not a valid JSON, use the quantity as is
+                        return item.quantity;
+                      }
+                      return item.quantity;
+                    }
+                  },
                   { key: 'priority', header: 'Priority' },
                   { key: 'status', header: 'Status' },
                   { key: 'receivedDate', header: 'Received Date' },
@@ -200,18 +260,12 @@ const ReceiveItems: React.FC<ReceiveItemsProps> = ({ sidebarCollapsed = false, t
                       ) : (
                         <div className="flex gap-2">
                           <ApproveBtn
-                            onClick={() => {
-                              alert('Request approved!');
-                              handleStatusUpdate(item.id, 'Approved');
-                            }}
+                            onClick={() => handleStatusUpdate(item.id, 'Approved')}
                             className="button-gradient"
                             size={12}
                           />
                           <RejectButton
-                            onClick={() => {
-                              alert('Request rejected!');
-                              handleStatusUpdate(item.id, 'Rejected');
-                            }}
+                            onClick={() => handleStatusUpdate(item.id, 'Rejected')}
                             className="button-gradient"
                             size={12}
                           />

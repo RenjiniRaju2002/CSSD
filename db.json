@@ -153,9 +153,24 @@
       "quantity": 11,
       "priority": "High",
       "requestedBy": "System",
-      "status": "Requested",
+      "status": "Rejected",
       "date": "2025-07-23",
-      "time": "02:25 pm"
+      "time": "02:25 pm",
+      "receivedDate": "2025-07-24",
+      "receivedTime": "09:53 am"
+    },
+    {
+      "id": "REQ016",
+      "department": "Oncology",
+      "items": "[{\"name\":\"gloves\",\"quantity\":6},{\"name\":\"scissors\",\"quantity\":5}]",
+      "quantity": 11,
+      "priority": "High",
+      "requestedBy": "System",
+      "status": "Approved",
+      "date": "2025-07-24",
+      "time": "10:01 am",
+      "receivedDate": "2025-07-24",
+      "receivedTime": "10:02 am"
     }
   ],
   "receive_items": [
@@ -325,19 +340,6 @@
       "receivedTime": "11:29 am"
     },
     {
-      "id": "REC016",
-      "requestId": "KIT004",
-      "department": "Cardiology",
-      "items": "Surgical Blades",
-      "quantity": 6,
-      "priority": "Medium",
-      "status": "Approved",
-      "date": "2025-07-22",
-      "time": "12:12 pm",
-      "receivedDate": "2025-07-22",
-      "receivedTime": "12:12 pm"
-    },
-    {
       "id": "REC013",
       "requestId": "REQ013",
       "department": "Cardiology",
@@ -373,11 +375,11 @@
       "quantity": 11,
       "priority": "High",
       "requestedBy": "System",
-      "status": "Pending",
+      "status": "Rejected",
       "date": "2025-07-23",
       "time": "02:25 pm",
-      "receivedDate": "2025-07-23",
-      "receivedTime": "02:25 pm"
+      "receivedDate": "2025-07-24",
+      "receivedTime": "09:53 am"
     },
     {
       "id": "REC020",
@@ -387,7 +389,7 @@
       "quantity": 14,
       "priority": "High",
       "requestedBy": "",
-      "status": "Pending",
+      "status": "Approved",
       "date": "2025-07-23",
       "time": "02:38 pm",
       "receivedDate": "2025-07-23",
@@ -401,11 +403,53 @@
       "quantity": 9,
       "priority": "Low",
       "requestedBy": "",
-      "status": "Pending",
+      "status": "Approved",
       "date": "2025-07-23",
       "time": "04:56 pm",
       "receivedDate": "2025-07-23",
       "receivedTime": "04:56 pm"
+    },
+    {
+      "id": "REC016",
+      "requestId": "REQ016",
+      "department": "Oncology",
+      "items": "[{\"name\":\"gloves\",\"quantity\":6},{\"name\":\"scissors\",\"quantity\":5}]",
+      "quantity": 11,
+      "priority": "High",
+      "requestedBy": "System",
+      "status": "Approved",
+      "date": "2025-07-24",
+      "time": "10:01 am",
+      "receivedDate": "2025-07-24",
+      "receivedTime": "10:02 am"
+    },
+    {
+      "id": "REC023",
+      "requestId": "KIT007",
+      "department": "General Surgery",
+      "items": "gloves, scissors",
+      "quantity": 8,
+      "priority": "Medium",
+      "requestedBy": "",
+      "status": "Pending",
+      "date": "2025-07-24",
+      "time": "01:31 pm",
+      "receivedDate": "2025-07-24",
+      "receivedTime": "01:31 pm"
+    },
+    {
+      "id": "REC025",
+      "requestId": "KIT009",
+      "department": "Oncology",
+      "items": "gloves, scissors",
+      "quantity": 7,
+      "priority": "Medium",
+      "requestedBy": "",
+      "status": "Pending",
+      "date": "2025-07-24",
+      "time": "02:00 pm",
+      "receivedDate": "2025-07-24",
+      "receivedTime": "02:00 pm"
     }
   ],
   "stockItems": [
@@ -576,7 +620,30 @@
       "startTime": "14:14",
       "endTime": "15:13",
       "status": "Completed",
+      "duration": 45,
+      "updatedAt": "2025-07-24T10:45:03.413Z"
+    },
+    {
+      "id": "STE015",
+      "machine": "Autoclave-2",
+      "process": "Steam Sterilization",
+      "itemId": "REQ016",
+      "startTime": "11:41",
+      "endTime": "",
+      "status": "In Progress",
       "duration": 45
+    },
+    {
+      "id": "STE016",
+      "machine": "Autoclave-3",
+      "process": "Steam Sterilization",
+      "itemId": "REQ012",
+      "startTime": "11:42",
+      "endTime": "12:27",
+      "status": "Completed",
+      "duration": 45,
+      "updatedAt": "2025-07-24T06:57:16.416Z",
+      "completedAt": "2025-07-24T06:57:16.416Z"
     }
   ],
   "availableItems": [
@@ -641,7 +708,7 @@
       "items": "sxzsx",
       "quantity": 5,
       "status": "Sterilized",
-      "readyTime": "15:13",
+      "readyTime": "12:27",
       "sterilizationId": "STE015",
       "machine": "Autoclave-1",
       "process": "Steam Sterilization"
@@ -715,6 +782,30 @@
       "status": "Active",
       "date": "2025-07-23",
       "time": "04:56 pm"
+    },
+    {
+      "id": "KIT007",
+      "name": "medical kit",
+      "department": "General Surgery",
+      "items": "gloves, scissors",
+      "quantity": 8,
+      "priority": "Medium",
+      "requestedBy": "",
+      "status": "Active",
+      "date": "2025-07-24",
+      "time": "01:31 pm"
+    },
+    {
+      "id": "KIT008",
+      "name": "ortho major kit",
+      "department": "Gynecology",
+      "items": "Needle, scissors, gloves",
+      "quantity": 16,
+      "priority": "Medium",
+      "requestedBy": "",
+      "status": "Active",
+      "date": "2025-07-24",
+      "time": "01:46 pm"
     }
   ],
   "issueItems": [

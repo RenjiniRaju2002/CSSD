@@ -225,7 +225,17 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   useEffect(() => {
     fetch('http://192.168.50.95:3001/createdKits')
       .then(res => res.json())
-      .then(data => setCreatedKits(data))
+      .then(data => {
+        // Sort kits by ID in descending order to show most recent first
+        const sortedKits = [...data].sort((a, b) => {
+          // Extract numeric parts from IDs (e.g., KIT007 -> 7, KIT010 -> 10)
+          const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+          const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+          return numB - numA; // Sort in descending order (newest first)
+        });
+        
+        setCreatedKits(sortedKits);
+      })
       .catch(() => setCreatedKits([]));
   }, []);
 
@@ -330,8 +340,13 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
 
     try {
       const nextId = `REQ${(requests.length + 1).toString().padStart(3, "0")}`;
-      const combinedItems = pendingItems.map(item => item.item).join(', ');
-      const totalQuantity = pendingItems.reduce((sum, item) => sum + Number(item.quantity), 0);
+      
+      // Create an array of items with their quantities
+      const itemsWithQuantities = pendingItems.map(item => ({
+        name: item.item,
+        quantity: Number(item.quantity)
+      }));
+      
       const department = pendingItems[0].department;
       const priority = pendingItems[0].priority;
       const requestedBy = pendingItems[0].requestedBy || 'System';
@@ -341,8 +356,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       const newRequest = {
         id: nextId,
         department,
-        items: combinedItems,
-        quantity: totalQuantity,
+        items: JSON.stringify(itemsWithQuantities), // Store items as JSON string
+        quantity: itemsWithQuantities.reduce((sum, item) => sum + item.quantity, 0), // Keep total quantity for backward compatibility
         priority,
         requestedBy,
         status: "Requested",
@@ -363,8 +378,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
         id: receiveItemId,
         requestId: nextId,
         department,
-        items: combinedItems,
-        quantity: totalQuantity,
+        items: JSON.stringify(itemsWithQuantities), // Store items as JSON string
+        quantity: itemsWithQuantities.reduce((sum, item) => sum + item.quantity, 0), // Keep total quantity for backward compatibility
         priority,
         requestedBy,
         status: "Pending",
@@ -450,16 +465,13 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       return;
     }
     
-    // Add the item to kitItems
+    // Add the item to kitItems as an object with name and quantity
     setKitItems([
       ...kitItems,
       {
-        department: kitDepartment,
-        priority: kitPriority,
-        requestedBy: kitRequestedBy,
-        item: kitItemName,
-        quantity: kitItemQuantity,
-      },
+        name: kitItemName.trim(),
+        quantity: Number(kitItemQuantity)
+      }
     ]);
     
     // Clear the item input fields
@@ -468,24 +480,29 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
   };
 
   const handleSaveKit = async () => {
-    if (!kitName || !kitDepartment || !kitPriority || kitItems.length === 0) return;
+    if (!kitName || !kitDepartment || !kitPriority || kitItems.length === 0) {
+      alert('Please fill in all required fields and add at least one item');
+      return;
+    }
+    
     // Generate a new kit ID
     const newKitId = `KIT${(createdKits.length + 1).toString().padStart(3, "0")}`;
     const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const currentDate = format(new Date(), 'yyyy-MM-dd');
     
-    // Create new kit object
+    // Create new kit object with items as array of objects
     const newKit = {
       id: newKitId,
       name: kitName,
       department: kitDepartment,
-      items: kitItems.map(item => item.item).join(", "),
-      quantity: kitItems.reduce((sum, item) => sum + Number(item.quantity), 0),
+      items: JSON.stringify(kitItems), // Store items as JSON string
+      quantity: kitItems.reduce((sum, item) => sum + item.quantity, 0),
       priority: kitPriority,
       requestedBy: kitRequestedBy,
       status: "Active",
       date: currentDate,
-      time: currentTime
+      time: currentTime,
+      createdAt: new Date().toISOString()
     };
     
     // POST to API for createdKits
@@ -501,8 +518,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
       id: receiveItemId,
       requestId: newKitId,
       department: kitDepartment,
-      items: kitItems.map(item => item.item).join(", "),
-      quantity: kitItems.reduce((sum, item) => sum + Number(item.quantity), 0),
+      items: JSON.stringify(kitItems), // Store items as JSON string
+      quantity: kitItems.reduce((sum, item) => sum + item.quantity, 0),
       priority: kitPriority,
       requestedBy: kitRequestedBy,
       status: "Pending",
@@ -619,7 +636,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     <div style={{flex:1}}>
                       {/* <label className="form-label">Outlet <span style={{color: 'red'}}>*</span></label> */}
                       <DropInput
-                        name="outlet"
                         label="Outlet"
                         value={selectedDepartment}
                         onChange={e => setSelectedDepartment(e.target.value)}
@@ -724,9 +740,51 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     columns={[
                       { key: 'department', header: 'Department' },
                       { key: 'priority', header: 'Priority' },
-                      { key: 'item', header: 'Item' },
-                      { key: 'quantity', header: 'Quantity' },
-                      { key: 'date', header: 'Date' }
+                      { 
+                        key: 'items', 
+                        header: 'Items',
+                        render: (item) => {
+                          // For pending items, we have direct access to the item data
+                          if (item.item) {
+                            return `${item.item} (${item.quantity})`;
+                          }
+                          // For saved requests with JSON string
+                          try {
+                            const items = JSON.parse(item.items);
+                            if (Array.isArray(items)) {
+                              return items.map((i: any) => `${i.name} (${i.quantity})`).join(', ');
+                            }
+                          } catch (e) {
+                            return item.items || '';
+                          }
+                          return item.items || '';
+                        }
+                      },
+                      { 
+                        key: 'quantity', 
+                        header: 'Quantity',
+                        render: (item) => {
+                          // For pending items
+                          if (item.quantity !== undefined) {
+                            return item.quantity;
+                          }
+                          // For saved requests with JSON string
+                          try {
+                            const items = JSON.parse(item.items);
+                            if (Array.isArray(items)) {
+                              return items.reduce((sum: number, i: any) => sum + (Number(i.quantity) || 0), 0);
+                            }
+                          } catch (e) {
+                            return item.quantity || 0;
+                          }
+                          return item.quantity || 0;
+                        }
+                      },
+                      { 
+                        key: 'date', 
+                        header: 'Date',
+                        render: (item) => item.date || format(new Date(), 'yyyy-MM-dd')
+                      }
                     ]}
                     data={pendingItems}
                   />
@@ -772,13 +830,69 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
               {createdKits.length > 0 ? (
                 <Table
                   columns={[
-                    { key: 'id', header: 'Kit ID' },
-                    { key: 'name', header: 'Kit Name' },
-                    { key: 'department', header: 'Department' },
-                    { key: 'items', header: 'Items' },
-                    { key: 'quantity', header: 'Quantity' },
-                    { key: 'priority', header: 'Priority' },
-                    { key: 'status', header: 'Status' },
+                    { 
+                      key: 'id', 
+                      header: 'Kit ID',
+                      render: (kit) => kit.id || 'N/A'
+                    },
+                    { 
+                      key: 'name', 
+                      header: 'Kit Name',
+                      render: (kit) => kit.name || 'N/A'
+                    },
+                    { 
+                      key: 'department', 
+                      header: 'Department',
+                      render: (kit) => kit.department || kit.Department || 'N/A'
+                    },
+                    { 
+                      key: 'items', 
+                      header: 'Items',
+                      render: (kit) => {
+                        try {
+                          const items = typeof kit.items === 'string' ? JSON.parse(kit.items) : kit.items;
+                          if (Array.isArray(items)) {
+                            return (
+                              <div>
+                                {items.map((item: any, index: number) => (
+                                  <div key={index}>
+                                    {item.name || item.item} ({item.quantity || 1})
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return kit.items || 'N/A';
+                        } catch (e) {
+                          return kit.items || 'N/A';
+                        }
+                      }
+                    },
+                    { 
+                      key: 'quantity', 
+                      header: 'Quantity',
+                      render: (kit) => {
+                        try {
+                          const items = typeof kit.items === 'string' ? JSON.parse(kit.items) : kit.items;
+                          if (Array.isArray(items)) {
+                            return items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0);
+                          }
+                          return kit.quantity || 0;
+                        } catch (e) {
+                          return kit.quantity || 0;
+                        }
+                      }
+                    },
+                    { 
+                      key: 'priority', 
+                      header: 'Priority',
+                      render: (kit) => (kit.priority || kit.Priority || 'N/A').toString()
+                    },
+                    { 
+                      key: 'status', 
+                      header: 'Status',
+                      render: (kit) => kit.status || 'Active'
+                    },
                     {
                       key: 'actions',
                       header: 'Actions',
@@ -787,32 +901,37 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                           onClick={() => handleViewKit(kit)}
                           className="text-blue-500 hover:text-blue-700"
                         >
-                          {/* <Eye size={16}/> */}
                           <FontAwesomeIcon icon={faEye} style={{ color: '#2196f3', fontSize: 16 }} />
                         </button>
                       )
                     }
                   ]}
-                  data={createdKits.filter((kit: any) => 
-                    kit.name.toLowerCase().includes(kitSearchTerm.toLowerCase()) ||
-                    kit.id.toLowerCase().includes(kitSearchTerm.toLowerCase())
-                  )}
+                  data={createdKits.filter((kit: any) => {
+                    const searchTerm = kitSearchTerm.toLowerCase();
+                    const kitDepartment = (kit.department || kit.Department || '').toString().toLowerCase();
+                    const kitPriority = (kit.priority || kit.Priority || '').toString().toLowerCase();
+                    
+                    return (
+                      kit.name?.toLowerCase().includes(searchTerm) ||
+                      kit.id?.toLowerCase().includes(searchTerm) ||
+                      kitDepartment.includes(searchTerm) ||
+                      kitPriority.includes(searchTerm)
+                    );
+                  })}
                 />
               ) : (
                 <div className="text-center text-gray-500 mt-4">No kits found</div>
               )}
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-2" style={{justifyContent:'flex-end'}}>
-            <div>
-              <ButtonWithGradient
-                type="button"
-                className="button-gradient"
-                onClick={() => setCurrentStep(1)}
-              >
-                Next
-              </ButtonWithGradient>
-            </div>
+          <div className="flex justify-content-end gap-2 mt-2">
+            <ButtonWithGradient
+              type="button"
+              className="button-gradient"
+              onClick={() => setCurrentStep(1)}
+            >
+              Next
+            </ButtonWithGradient>
           </div>
         </div>
       )}
@@ -881,10 +1000,60 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                 columns={[
                   { key: 'id', header: 'Request ID' },
                   { key: 'department', header: 'Department' },
-                  { key: 'items', header: 'Items' },
-                  { key: 'quantity', header: 'Quantity' },
-                  { key: 'priority', header: 'Priority' },
-                  { key: 'status', header: 'Status' },
+                  { 
+                    key: 'items', 
+                    header: 'Items',
+                    render: (item: any) => {
+                      try {
+                        // Try to parse items as JSON array
+                        const items = JSON.parse(item.items);
+                        if (Array.isArray(items)) {
+                          return items.map((i: any) => `${i.name} (${i.quantity})`).join(', ');
+                        }
+                      } catch (e) {
+                        // If not a valid JSON, display as is
+                        return item.items;
+                      }
+                      return item.items;
+                    }
+                  },
+                  { 
+                    key: 'quantity', 
+                    header: 'Quantity',
+                    render: (item: any) => {
+                      try {
+                        const items = JSON.parse(item.items);
+                        if (Array.isArray(items)) {
+                          return items.reduce((sum: number, i: any) => sum + (Number(i.quantity) || 0), 0);
+                        }
+                      } catch (e) {
+                        return item.quantity || 0;
+                      }
+                      return item.quantity || 0;
+                    }
+                  },
+                  { 
+                    key: 'priority', 
+                    header: 'Priority',
+                    render: (item: any) => item.priority.charAt(0).toUpperCase() + item.priority.slice(1).toLowerCase()
+                  },
+                  { 
+                    key: 'status', 
+                    header: 'Status',
+                    render: (item: any) => (
+                      <span 
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.status.toLowerCase() === 'approved' 
+                            ? 'bg-green-100 text-green-800' 
+                            : item.status.toLowerCase() === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    )
+                  },
                   { key: 'date', header: 'Date' },
                   { key: 'time', header: 'Time' },
                 ]}
@@ -995,7 +1164,6 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                    
                     <div>
                       <Input
-                        name="kitItemName"
                         label="Item/Kit"
                         value={kitItemName}
                         onChange={e => setKitItemName(e.target.value)}
@@ -1005,9 +1173,8 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                     </div>
                     <div>
                       <Input
-                        name="kitItemQuantity"
                         label="Quantity"
-                        type="number" 
+                        type="number"
                         value={kitItemQuantity}
                         onChange={e => setKitItemQuantity(e.target.value)}
                         placeholder="Enter quantity" 
@@ -1029,7 +1196,7 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                    
                     <Table
                       columns={[
-                        { key: 'item', header: 'Item' },
+                        { key: 'name', header: 'Item' },
                         { key: 'quantity', header: 'Quantity' },
                         { key: 'priority', header: 'Priority' },
                         { key: 'department', header: 'Department' }
@@ -1091,51 +1258,80 @@ const  RequestManagement : React.FC< RequestManagementProps > = ({ sidebarCollap
                 <div className="grid grid-cols-2 gap-4 mb-4" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Kit ID</p>
-                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.id}</p>
+                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.id || 'N/A'}</p>
                   </div>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Kit Name</p>
-                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.name}</p>
+                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.name || 'N/A'}</p>
                   </div>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Department</p>
-                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>{selectedKit.department}</p>
+                    <p style={{ fontSize: '13px', color: '#333', margin: 0, fontWeight: 500 }}>
+                      {selectedKit.department || selectedKit.Department || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 4px 0' }}>Priority</p>
                     <p style={{ 
                       fontSize: '13px', 
-                      color: selectedKit.priority === 'High' ? '#dc2626' : 
-                            selectedKit.priority === 'Medium' ? '#f59e0b' : '#10b981',
+                      color: (selectedKit.priority || selectedKit.Priority)?.toLowerCase?.() === 'high' ? '#dc2626' : 
+                            (selectedKit.priority || selectedKit.Priority)?.toLowerCase?.() === 'medium' ? '#f59e0b' : '#10b981',
                       margin: 0, 
-                      fontWeight: 500 
+                      fontWeight: 500,
+                      textTransform: 'capitalize'
                     }}>
-                      {selectedKit.priority}
+                      {((selectedKit.priority || selectedKit.Priority || 'N/A') as string).toLowerCase()}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <p style={{ fontSize: '12px', color: '#5a5a5a', margin: '0 0 8px 0', fontWeight: 600 }}>Items</p>
-                  <Table
-                    columns={[
-                      { 
-                        key: 'item', 
-                        header: 'Item',
-                        headerStyle: { fontSize: '12px', fontWeight: 600, color: '#4b5563' },
-                        cellStyle: { fontSize: '13px', color: '#1f2937' }
-                      },
-                      { 
-                        key: 'quantity', 
-                        header: 'Quantity',
-                        headerStyle: { fontSize: '12px', fontWeight: 600, color: '#4b5563' },
-                        cellStyle: { fontSize: '13px', color: '#1f2937' }
+                  {(() => {
+                    try {
+                      // Try to parse items if they're in JSON format
+                      const items = typeof selectedKit.items === 'string' 
+                        ? JSON.parse(selectedKit.items)
+                        : selectedKit.items;
+                      
+                      if (Array.isArray(items)) {
+                        return (
+                          <div style={{ fontSize: '13px', color: '#1f2937' }}>
+                            {items.map((item: any, index: number) => (
+                              <div key={index}>
+                                {item.name || item.item} ({item.quantity || 1})
+                              </div>
+                            ))}
+                          </div>
+                        );
                       }
-                    ]}
-                    data={selectedKit.items.split(',').map((item: string, index: number) => ({
-                      item: item.trim(),
-                      quantity: selectedKit.quantity
-                    }))}
-                  />
+                      
+                      // If items is a string but not JSON, try to split by comma
+                      if (typeof selectedKit.items === 'string') {
+                        return (
+                          <div style={{ fontSize: '13px', color: '#1f2937' }}>
+                            {selectedKit.items.split(',').map((item: string, index: number) => (
+                              <div key={index}>
+                                {item.trim()} {selectedKit.quantity ? `(${selectedKit.quantity})` : ''}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+                      
+                      // Fallback to displaying raw items
+                      return <div style={{ fontSize: '13px', color: '#1f2937' }}>{JSON.stringify(selectedKit.items)}</div>;
+                      
+                    } catch (e) {
+                      // If parsing fails, display the raw items
+                      return (
+                        <div style={{ fontSize: '13px', color: '#1f2937' }}>
+                          {typeof selectedKit.items === 'string' 
+                            ? selectedKit.items 
+                            : JSON.stringify(selectedKit.items)}
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
               </div>
             </div>

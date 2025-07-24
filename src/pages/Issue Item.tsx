@@ -15,6 +15,7 @@ import SectionHeading from "../components/SectionHeading";
 import Pagination from "../components/Pagination";
 import Stepper from "../components/Stepper";
 import Breadcrumb from "../components/Breadcrumb";
+import DateInput from "../components/DateInput";
 
 interface AvailableItem {
   id: string;
@@ -39,6 +40,8 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
   const [availableItems, setAvailableItems] = useState<AvailableItem[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState("");
   const [selectedOutlet, setSelectedOutlet] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [requestIds, setRequestIds] = useState<string[]>([]);
   const [allRequests, setAllRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -314,6 +317,66 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
     }
   };
 
+  // Filter available items and requests by date range
+  const getFilteredItems = () => {
+    if (!fromDate && !toDate) {
+      return {
+        available: availableItems,
+        requests: allRequests.filter(r => r.status === "Requested" || r.status === "In Progress")
+      };
+    }
+    
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+    
+    const filterByDate = (item) => {
+      const itemDate = new Date(item.date || item.receivedDate);
+      
+      if (from && to) {
+        return itemDate >= from && itemDate <= to;
+      } else if (from) {
+        return itemDate >= from;
+      } else if (to) {
+        return itemDate <= to;
+      }
+      return true;
+    };
+    
+    return {
+      available: availableItems.filter(filterByDate),
+      requests: allRequests.filter(r => 
+        (r.status === "Requested" || r.status === "In Progress") && 
+        filterByDate(r)
+      )
+    };
+  };
+
+  const { available: filteredAvailableItems, requests: filteredRequests } = getFilteredItems();
+  
+  // Get unique request IDs from both available items and direct requests
+  const requestOptions = [
+    { label: "Select sterilized item to issue", value: "" },
+    ...Array.from(new Set([
+      ...filteredAvailableItems.map(item => item.id), 
+      ...filteredRequests.map(r => r.id)
+    ])).map(id => {
+      const item = filteredAvailableItems.find(i => i.id === id);
+      const request = filteredRequests.find(r => r.id === id);
+      if (item) {
+        return {
+          label: `${id} - ${item.items} (${item.quantity}) [Sterilized]`,
+          value: id
+        };
+      } else if (request) {
+        return {
+          label: `${id} - ${request.items} (${request.quantity}) [${request.status}]`,
+          value: id
+        };
+      }
+      return null;
+    }).filter(Boolean)
+  ];
+
   const filteredIssuedItems = issuedItems.filter(
     (item: any) =>
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -386,34 +449,34 @@ const IssueItem: React.FC<IssueItemProps> = ({ sidebarCollapsed = false, toggleS
             <div className="issue-card-content">
               <form onSubmit={handleIssueItem} className="form-grid">
                 <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ display: 'flex', gap: '10px', flex: 1, maxWidth: '400px' }}>
+                    <div style={{ flex: 1 }}>
+                      <DateInput
+                        label="From Date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        style={{ width: '100%' }}
+                        inputStyle={{ padding: '6px 8px', fontSize: '14px' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <DateInput
+                        label="To Date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        min={fromDate}
+                        style={{ width: '100%' }}
+                        inputStyle={{ padding: '6px 8px', fontSize: '14px' }}
+                      />
+                    </div>
+                  </div>
+                  
                   <DropInput
                     label="Request ID"
                     value={selectedRequestId}
                     onChange={(e) => setSelectedRequestId(e.target.value)}
                     width={'250px'}
-                    options={[
-                      { label: "Select sterilized item to issue", value: "" },
-                      ...Array.from(new Set([...availableItems.map(item => item.id), ...requestIds])).map(id => {
-                        const item = availableItems.find(i => i.id === id);
-                        const request = allRequests.find(r => r.id === id);
-                        if (item) {
-                          return {
-                            label: `${id} - ${item.items} (${item.quantity}) [Sterilized]`,
-                            value: id
-                          };
-                        } else if (request) {
-                          return {
-                            label: `${id} - ${request.items} (${request.quantity}) [${request.status}]`,
-                            value: id
-                          };
-                        } else {
-                          return {
-                            label: id,
-                            value: id
-                          };
-                        }
-                      })
-                    ]}
+                    options={requestOptions}
                   />
                   <DropInput 
                     label="Outlet" 
